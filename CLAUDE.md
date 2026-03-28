@@ -37,17 +37,11 @@ Light/dark themes switch via `[data-theme="dark"]` on `<html>`. Semantic variabl
 
 ## Data Model
 
-All benchmark data lives in `script.js` as plain JS arrays (`MODELS`, `CATEGORIES`). Replace with real data or refactor to fetch from API/JSON.
+Website benchmark data lives in `data.js` as `BENCHMARK_DATA` (array of experiment objects).
 
-### Model schema:
-```js
-{ id, name, org, avatar, scores: { overall, catA, catB, catC }, date }
-```
+### Where the real data comes from
 
-### Category schema:
-```js
-{ id, name, icon, desc, tasks, key }
-```
+The source of truth is the SQLite databases in `yhacktemp/yhacktemp/autoresearch-yaledgx/runs/run_*/results.db`. Each DB has an `experiments` table with `config_json`, `metrics_json`, `status`, `strategy_used`, `pareto_rank`, and `created_at` columns. To re-extract fresh data, query all `results.db` files for `status='completed'`, deduplicate by config hash (keep latest), and recompute Pareto ranks on (SCI ↓, BPB ↓). The analysis script at `yhacktemp/yhacktemp/autoresearch-yaledgx/analyze_all.py` does exactly this and can export combined JSON/CSV via `--export`. A pre-exported snapshot also lives at `yhacktemp/yhacktemp/autoresearch-yaledgx/runs/combined/combined_results.json`.
 
 ## How to Run
 
