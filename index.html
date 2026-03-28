@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoBench — Benchmark Results</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <span class="logo-icon">◆</span>
+        <span class="logo-text">EcoBench</span>
+      </a>
+      <div class="nav-links">
+        <a href="#overview" class="nav-link active">Overview</a>
+        <a href="#leaderboard" class="nav-link">Leaderboard</a>
+        <a href="#categories" class="nav-link">Categories</a>
+        <a href="#methodology" class="nav-link">Methodology</a>
+      </div>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" id="theme-toggle">
+          <span class="icon-sun">☀</span>
+          <span class="icon-moon" style="display:none">☾</span>
+        </button>
+        <a href="#submit" class="btn btn-primary">Submit Results</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero" id="overview">
+    <div class="container">
+      <div class="hero-badge">Latest benchmark run — <time datetime="2026-03-28">March 28, 2026</time></div>
+      <h1 class="hero-title">Benchmark Results</h1>
+      <p class="hero-subtitle">
+        A comprehensive, open evaluation framework. Compare models, systems, or tools
+        across standardized tasks with transparent methodology.
+      </p>
+      <div class="hero-stats">
+        <div class="stat-card">
+          <span class="stat-value" data-count="0">—</span>
+          <span class="stat-label">Models Evaluated</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" data-count="0">—</span>
+          <span class="stat-label">Tasks</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" data-count="0">—</span>
+          <span class="stat-label">Categories</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" data-count="0">—</span>
+          <span class="stat-label">Total Runs</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Leaderboard Section -->
+  <section class="section" id="leaderboard">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Leaderboard</h2>
+          <p class="section-desc">Overall rankings across all benchmark categories.</p>
+        </div>
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="overall">Overall</button>
+          <button class="filter-btn" data-filter="category-a">Category A</button>
+          <button class="filter-btn" data-filter="category-b">Category B</button>
+          <button class="filter-btn" data-filter="category-c">Category C</button>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th class="th-rank">Rank</th>
+              <th class="th-name">Model / System</th>
+              <th class="th-score">Overall Score</th>
+              <th class="th-bar">Distribution</th>
+              <th class="th-cat">Cat. A</th>
+              <th class="th-cat">Cat. B</th>
+              <th class="th-cat">Cat. C</th>
+              <th class="th-date">Last Updated</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body">
+            <!-- Populated by JS or real data later -->
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">Scores are normalized to 0–100. Higher is better. Click a row for detailed breakdown.</p>
+    </div>
+  </section>
+
+  <!-- Category Cards Section -->
+  <section class="section section-alt" id="categories">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Categories</h2>
+          <p class="section-desc">Explore benchmark results by evaluation category.</p>
+        </div>
+      </div>
+
+      <div class="card-grid" id="category-cards">
+        <!-- Populated by JS or real data later -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Detail / Comparison Section -->
+  <section class="section" id="comparison">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Head-to-Head Comparison</h2>
+          <p class="section-desc">Select two models to compare across all dimensions.</p>
+        </div>
+      </div>
+
+      <div class="comparison-controls">
+        <div class="select-wrapper">
+          <label class="select-label">Model A</label>
+          <select class="select" id="compare-a">
+            <option value="">Select a model…</option>
+          </select>
+        </div>
+        <span class="vs-badge">VS</span>
+        <div class="select-wrapper">
+          <label class="select-label">Model B</label>
+          <select class="select" id="compare-b">
+            <option value="">Select a model…</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="comparison-chart" id="comparison-chart">
+        <div class="chart-placeholder">
+          <p>Select two models above to see a detailed comparison.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Methodology Section -->
+  <section class="section section-alt" id="methodology">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Methodology</h2>
+          <p class="section-desc">How we evaluate and score benchmark results.</p>
+        </div>
+      </div>
+
+      <div class="methodology-grid">
+        <div class="method-card">
+          <div class="method-icon">1</div>
+          <h3 class="method-title">Task Design</h3>
+          <p class="method-desc">
+            Tasks are designed to test specific capabilities with clear success criteria.
+            Each task is reviewed for fairness and reproducibility.
+          </p>
+        </div>
+        <div class="method-card">
+          <div class="method-icon">2</div>
+          <h3 class="method-title">Execution</h3>
+          <p class="method-desc">
+            All models are evaluated under identical conditions with controlled environments,
+            fixed prompts, and deterministic settings where possible.
+          </p>
+        </div>
+        <div class="method-card">
+          <div class="method-icon">3</div>
+          <h3 class="method-title">Scoring</h3>
+          <p class="method-desc">
+            Results are scored using automated metrics and human evaluation.
+            Scores are normalized to a 0–100 scale for cross-category comparison.
+          </p>
+        </div>
+        <div class="method-card">
+          <div class="method-icon">4</div>
+          <h3 class="method-title">Transparency</h3>
+          <p class="method-desc">
+            All prompts, scoring rubrics, and raw results are published openly.
+            We welcome community review and contributions.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="logo-icon">◆</span>
+          <span class="logo-text">EcoBench</span>
+          <p class="footer-tagline">Open, transparent, reproducible benchmarks.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Resources</h4>
+            <a href="#methodology">Methodology</a>
+            <a href="#categories">Categories</a>
+            <a href="#">Raw Data</a>
+            <a href="#">API</a>
+          </div>
+          <div class="footer-col">
+            <h4>Community</h4>
+            <a href="#">GitHub</a>
+            <a href="#">Discord</a>
+            <a href="#">Contributing</a>
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="#">License</a>
+            <a href="#">Terms</a>
+            <a href="#">Privacy</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 EcoBench. Open source under MIT License.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
