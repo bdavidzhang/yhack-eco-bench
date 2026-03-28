@@ -6,26 +6,26 @@
 
 /* ---------- Chart Color Tokens (readable from JS via getComputedStyle) --- */
 :root {
-  --chart-quant-none-bg: var(--color-purple-500);
-  --chart-quant-none-border: var(--color-purple-600);
+  --chart-quant-none-bg: #10b981;
+  --chart-quant-none-border: #059669;
   --chart-quant-gptq4-bg: var(--color-blue-500);
   --chart-quant-gptq4-border: var(--color-blue-600);
-  --chart-quant-gptq8-bg: var(--color-green-500);
-  --chart-quant-gptq8-border: var(--color-green-600);
+  --chart-quant-gptq8-bg: var(--color-orange-500);
+  --chart-quant-gptq8-border: var(--color-orange-600);
   --chart-quant-awq4-bg: var(--color-orange-500);
   --chart-quant-awq4-border: var(--color-orange-600);
-  --chart-quant-awq8-bg: var(--color-yellow-500);
-  --chart-quant-awq8-border: var(--color-yellow-600);
-  --chart-pareto-line: var(--data-viz-favorable);
-  --chart-pareto-line-accent: var(--color-green-500);
-  --chart-tooltip-bg: var(--color-purple-800);
-  --chart-tooltip-text: var(--color-white);
-  --chart-operational: var(--color-green-400);
-  --chart-embodied: var(--color-purple-400);
-  --chart-bar-primary: var(--color-blue-500);
-  --chart-bar-secondary: var(--color-blue-400);
-  --chart-bar-tertiary: var(--color-blue-300);
-  --chart-bar-muted: var(--color-blue-200);
+  --chart-quant-awq8-bg: var(--color-red-400);
+  --chart-quant-awq8-border: var(--color-red-600);
+  --chart-pareto-line: #0f172a;
+  --chart-pareto-line-accent: #334155;
+  --chart-tooltip-bg: #0f172a;
+  --chart-tooltip-text: #ffffff;
+  --chart-operational: #34d399;
+  --chart-embodied: #94a3b8;
+  --chart-bar-primary: #10b981;
+  --chart-bar-secondary: #34d399;
+  --chart-bar-tertiary: #6ee7b7;
+  --chart-bar-muted: #d1fae5;
 }
 
 /* ---------- Font Overrides (Solarpunk: sharp geometric) ---------- */
@@ -55,7 +55,7 @@ body {
   line-height: var(--typography-paragraph-body-line-height);
   letter-spacing: var(--typography-paragraph-body-letter-spacing);
   color: var(--color-purple-800);
-  background-color: #faf9f7;
+  background-color: #f8fafc;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -335,7 +335,7 @@ a:hover {
     top: var(--layout-navigation-bar-height);
     left: 0;
     right: 0;
-    background-color: var(--color-purple-800);
+    background-color: #0f172a;
     flex-direction: column;
     padding: var(--spacing-16);
     border-bottom: 2px solid rgba(255, 255, 255, 0.1);
@@ -458,7 +458,7 @@ a:hover {
 
 /* ---------- Card ---------- */
 .kz-card {
-  background-color: #fffffe;
+  background-color: #ffffff;
   border: var(--border-width-1) solid var(--color-gray-300);
   border-radius: var(--border-solid-border-radius);
   box-shadow: var(--shadow-small-box-shadow);
@@ -492,8 +492,8 @@ a:hover {
 }
 
 .kz-card--purple {
-  background-color: var(--color-purple-100);
-  border-color: var(--color-purple-400);
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .kz-card--yellow {
@@ -546,13 +546,13 @@ a:hover {
 }
 
 .kz-badge--dark {
-  background-color: var(--color-purple-700);
-  color: var(--color-white);
+  background-color: #1e293b;
+  color: #ffffff;
 }
 
 .kz-badge--green {
-  background-color: var(--color-green-200);
-  color: var(--color-green-700);
+  background-color: #d1fae5;
+  color: #047857;
 }
 
 .kz-badge--red {
@@ -579,9 +579,10 @@ a:hover {
 
 /* Pareto badge */
 .kz-badge--pareto {
-  background-color: var(--data-viz-favorable);
-  color: var(--color-green-700);
+  background-color: #ecfdf5;
+  color: #047857;
   font-weight: 600;
+  border: 1px solid #6ee7b7;
   animation: kz-pareto-glow 2.5s ease-in-out infinite;
 }
 
@@ -629,8 +630,8 @@ a:hover {
 }
 
 .kz-well--green {
-  background-color: var(--color-green-100);
-  border-color: var(--color-green-400);
+  background-color: #ecfdf5;
+  border-color: #6ee7b7;
 }
 
 .kz-well--yellow {
@@ -639,8 +640,8 @@ a:hover {
 }
 
 .kz-well--purple {
-  background-color: var(--color-purple-100);
-  border-color: var(--color-purple-400);
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .kz-well--orange {
@@ -678,7 +679,7 @@ a:hover {
 
 .kz-tag--positive {
   background-color: var(--color-green-100);
-  color: var(--color-green-700);
+  color: var(--color-gray-500);
 }
 
 .kz-tag--negative {
@@ -698,7 +699,7 @@ a:hover {
 
 .kz-tag--live {
   background-color: var(--color-green-100);
-  color: var(--color-green-700);
+  color: var(--color-gray-500);
 }
 
 .kz-tag--draft {
@@ -861,7 +862,7 @@ a:hover {
 
 /* Card-style rows */
 .kz-table-row {
-  background-color: #fffffe;
+  background-color: #ffffff;
   transition: background-color var(--animation-duration-fast) var(--animation-easing-function-ease-in-out);
 }
 
@@ -874,7 +875,7 @@ a:hover {
 }
 
 .kz-table-row--clickable:hover {
-  background-color: var(--color-green-100);
+  background-color: #f1f5f9;
 }
 
 .kz-table-row--clickable:focus-visible {
@@ -888,10 +889,10 @@ a:hover {
 
 /* Pareto-optimal row highlight */
 .kz-table-row--pareto {
-  background-color: var(--color-green-100);
+  background-color: #f0fdf4;
 }
 .kz-table-row--pareto:hover {
-  background-color: var(--color-green-200);
+  background-color: #dcfce7;
 }
 
 .kz-table-cell {
@@ -938,9 +939,10 @@ a:hover {
 
 /* ---------- Hero Section ---------- */
 .kz-hero {
-  background-color: var(--color-green-100);
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 40%, #f8fafc 100%);
   padding: var(--spacing-72) 0 var(--spacing-48) 0;
   position: relative;
+  border-bottom: 1px solid #d1fae5;
 }
 
 .kz-hero__eyebrow {
@@ -976,7 +978,7 @@ a:hover {
   font-weight: 400;
   font-size: var(--typography-paragraph-intro-lede-font-size);
   line-height: var(--typography-paragraph-intro-lede-line-height);
-  color: var(--color-green-700);
+  color: var(--color-gray-500);
   max-width: 600px;
   margin-bottom: var(--spacing-24);
 }
@@ -995,7 +997,7 @@ a:hover {
   gap: var(--spacing-32);
   margin: var(--spacing-32) 0 0;
   padding-top: var(--spacing-24);
-  border-top: var(--border-width-1) solid var(--color-green-300);
+  border-top: 1px solid #e2e8f0;
 }
 
 .kz-stat-tile {
@@ -1017,7 +1019,7 @@ a:hover {
   font-family: var(--font-body);
   font-weight: 500;
   font-size: var(--typography-paragraph-extra-small-font-size);
-  color: var(--color-green-700);
+  color: var(--color-gray-500);
   margin-bottom: var(--spacing-2);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1036,13 +1038,13 @@ a:hover {
   font-family: var(--font-body);
   font-weight: 500;
   font-size: var(--typography-paragraph-extra-small-font-size);
-  color: var(--color-green-600);
+  color: #64748b;
   margin-left: var(--spacing-4);
 }
 
 /* ---------- Chart Container ---------- */
 .kz-chart-wrap {
-  background-color: #fffffe;
+  background-color: #ffffff;
   border: var(--border-width-1) solid var(--color-gray-300);
   border-radius: var(--border-solid-border-radius);
   box-shadow: var(--shadow-small-box-shadow);
@@ -1103,7 +1105,7 @@ a:hover {
 
 @keyframes kz-pareto-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-  50% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15); }
+  50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15); }
 }
 
 @keyframes kz-stagger-in {
@@ -1181,7 +1183,7 @@ a:hover {
 }
 
 .kz-modal {
-  background-color: #faf9f7;
+  background-color: #f8fafc;
   border-radius: var(--border-solid-border-radius);
   box-shadow: var(--shadow-large-box-shadow);
   max-width: 960px;
@@ -1273,7 +1275,7 @@ a:hover {
   background-color: var(--color-green-100);
 }
 .kz-metric-card--green .kz-metric-card__value {
-  color: var(--color-green-700);
+  color: var(--color-gray-500);
 }
 
 .kz-metric-card--blue {
@@ -1331,7 +1333,7 @@ a:hover {
 }
 
 .kz-well--green .kz-data-medium {
-  color: var(--color-green-700);
+  color: var(--color-gray-500);
   font-weight: 700;
 }
 
@@ -1354,12 +1356,12 @@ a:hover {
   font-variant-numeric: tabular-nums;
   font-size: 1.5rem;
   font-weight: 700;
-  background-color: var(--color-purple-100);
+  background-color: #f1f5f9;
   padding: var(--spacing-24) var(--spacing-32);
   border-radius: var(--border-solid-border-radius);
-  border: var(--border-width-1) solid var(--color-purple-300);
+  border: 1px solid #cbd5e1;
   margin: var(--spacing-16) 0;
-  color: var(--color-purple-700);
+  color: #1e293b;
   letter-spacing: 0.02em;
   text-align: center;
 }
@@ -1372,7 +1374,7 @@ a:hover {
 
 /* ---------- Color-Coded Score Indicators ---------- */
 .kz-score--good {
-  color: var(--color-green-600);
+  color: #059669;
 }
 .kz-score--ok {
   color: var(--color-yellow-600);
@@ -1383,16 +1385,16 @@ a:hover {
 
 /* Semantic data value coloring for stat tiles */
 .kz-stat-tile--sci .kz-stat-tile__value {
-  color: var(--color-green-600);
+  color: #059669;
 }
 .kz-stat-tile--efficiency .kz-stat-tile__value {
-  color: var(--color-blue-600);
+  color: #0284c7;
 }
 .kz-stat-tile--count .kz-stat-tile__value {
-  color: var(--color-purple-700);
+  color: #0f172a;
 }
 .kz-stat-tile--region .kz-stat-tile__value {
-  color: var(--color-orange-600);
+  color: #0f172a;
 }
 
 
@@ -1481,8 +1483,8 @@ a:hover {
 
 /* ---------- Quant-Specific Tag Colors ---------- */
 .kz-tag--quant-none {
-  background-color: var(--color-purple-100);
-  color: var(--color-purple-700);
+  background-color: #ecfdf5;
+  color: #047857;
 }
 .kz-tag--quant-gptq4 {
   background-color: var(--color-blue-100);
@@ -1490,7 +1492,7 @@ a:hover {
 }
 .kz-tag--quant-gptq8 {
   background-color: var(--color-green-100);
-  color: var(--color-green-700);
+  color: var(--color-gray-500);
 }
 .kz-tag--quant-awq4 {
   background-color: var(--color-orange-100);
@@ -1517,7 +1519,7 @@ a:hover {
 }
 
 .kz-footer a {
-  color: var(--color-green-300);
+  color: #6ee7b7;
 }
 
 .kz-footer__inner {
@@ -1535,7 +1537,7 @@ a:hover {
 }
 
 .kz-footer__highlight {
-  color: var(--color-green-300);
+  color: #6ee7b7;
 }
 
 /* ---------- Config Tags Row ---------- */
