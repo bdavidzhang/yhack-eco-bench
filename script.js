@@ -3,6 +3,100 @@
    ============================================== */
 
 // ─── Sample Benchmark Data ────────────────────────────────────────────────────
+
+// ─── Sample Benchmark Data ────────────────────────────────────────────────────
+const BENCHMARK_DATA = [
+  {
+    config_hash: "a1b2c3d4e5f6",
+    config: { model_name: "meta-llama/Llama-3.2-1B", quantization: "none", batch_size: 1, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.18, latency_p50_ms: 14.2, latency_p95_ms: 19.8, latency_p99_ms: 25.1, tokens_per_sec: 70.4, total_tokens: 21120, gpu_power_avg_w: 48.5, gpu_power_max_w: 72.3, energy_per_token_j: 0.689, gpu_util_avg_pct: 82.1, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 1800, gpu_temp_avg_c: 55.2, gpu_temp_max_c: 71.0, thermal_throttled: false, mem_used_gb: 8.4, mem_available_gb: 119.6, mem_pressure_pct: 6.6, nvme_temp_c: 38.5, system_load_avg: 3.2, sci_per_token: 0.000072, carbon_operational_g: 0.000032, carbon_embodied_g: 0.00004, energy_kwh_per_token: 1.914e-7, gpu_efficiency: 1.452, cost_per_token_usd: 2.30e-8 },
+    status: "completed", strategy_used: "grid", pareto_rank: 1, created_at: "2026-03-28T12:00:00+00:00", error_message: null
+  },
+  {
+    config_hash: "b2c3d4e5f6a1",
+    config: { model_name: "meta-llama/Llama-3.2-1B", quantization: "gptq-4bit", batch_size: 1, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.24, latency_p50_ms: 9.8, latency_p95_ms: 14.1, latency_p99_ms: 17.5, tokens_per_sec: 102.0, total_tokens: 30600, gpu_power_avg_w: 35.2, gpu_power_max_w: 55.0, energy_per_token_j: 0.345, gpu_util_avg_pct: 71.3, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 2100, gpu_temp_avg_c: 48.1, gpu_temp_max_c: 60.5, thermal_throttled: false, mem_used_gb: 4.2, mem_available_gb: 123.8, mem_pressure_pct: 3.3, nvme_temp_c: 36.0, system_load_avg: 2.1, sci_per_token: 0.000042, carbon_operational_g: 0.000018, carbon_embodied_g: 0.000024, energy_kwh_per_token: 9.58e-8, gpu_efficiency: 2.898, cost_per_token_usd: 1.15e-8 },
+    status: "completed", strategy_used: "grid", pareto_rank: 0, created_at: "2026-03-28T12:10:00+00:00", error_message: null
+  },
+  {
+    config_hash: "c3d4e5f6a1b2",
+    config: { model_name: "meta-llama/Llama-3.2-1B", quantization: "gptq-4bit", batch_size: 4, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.24, latency_p50_ms: 11.5, latency_p95_ms: 16.2, latency_p99_ms: 20.0, tokens_per_sec: 145.0, total_tokens: 43500, gpu_power_avg_w: 42.5, gpu_power_max_w: 67.8, energy_per_token_j: 0.293, gpu_util_avg_pct: 88.5, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 2000, gpu_temp_avg_c: 52.3, gpu_temp_max_c: 68.1, thermal_throttled: false, mem_used_gb: 6.8, mem_available_gb: 121.2, mem_pressure_pct: 5.3, nvme_temp_c: 37.2, system_load_avg: 3.8, sci_per_token: 0.000038, carbon_operational_g: 0.000016, carbon_embodied_g: 0.000022, energy_kwh_per_token: 8.14e-8, gpu_efficiency: 3.412, cost_per_token_usd: 9.77e-9 },
+    status: "completed", strategy_used: "bayesian", pareto_rank: 0, created_at: "2026-03-28T12:20:00+00:00", error_message: null
+  },
+  {
+    config_hash: "d4e5f6a1b2c3",
+    config: { model_name: "meta-llama/Llama-3.2-1B", quantization: "awq-4bit", batch_size: 4, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.22, latency_p50_ms: 10.8, latency_p95_ms: 15.5, latency_p99_ms: 19.2, tokens_per_sec: 148.5, total_tokens: 44550, gpu_power_avg_w: 41.0, gpu_power_max_w: 65.0, energy_per_token_j: 0.276, gpu_util_avg_pct: 89.2, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 2050, gpu_temp_avg_c: 51.8, gpu_temp_max_c: 66.5, thermal_throttled: false, mem_used_gb: 6.5, mem_available_gb: 121.5, mem_pressure_pct: 5.1, nvme_temp_c: 37.0, system_load_avg: 3.6, sci_per_token: 0.000035, carbon_operational_g: 0.000014, carbon_embodied_g: 0.000021, energy_kwh_per_token: 7.67e-8, gpu_efficiency: 3.622, cost_per_token_usd: 9.20e-9 },
+    status: "completed", strategy_used: "bayesian", pareto_rank: 0, created_at: "2026-03-28T12:30:00+00:00", error_message: null
+  },
+  {
+    config_hash: "e5f6a1b2c3d4",
+    config: { model_name: "meta-llama/Llama-3.2-1B", quantization: "gptq-8bit", batch_size: 2, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.19, latency_p50_ms: 12.0, latency_p95_ms: 17.0, latency_p99_ms: 21.5, tokens_per_sec: 95.0, total_tokens: 28500, gpu_power_avg_w: 44.0, gpu_power_max_w: 68.0, energy_per_token_j: 0.463, gpu_util_avg_pct: 80.5, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 1900, gpu_temp_avg_c: 53.5, gpu_temp_max_c: 69.2, thermal_throttled: false, mem_used_gb: 7.2, mem_available_gb: 120.8, mem_pressure_pct: 5.6, nvme_temp_c: 37.8, system_load_avg: 3.0, sci_per_token: 0.000055, carbon_operational_g: 0.000025, carbon_embodied_g: 0.00003, energy_kwh_per_token: 1.286e-7, gpu_efficiency: 2.159, cost_per_token_usd: 1.54e-8 },
+    status: "completed", strategy_used: "grid", pareto_rank: 0, created_at: "2026-03-28T12:40:00+00:00", error_message: null
+  },
+  {
+    config_hash: "f6a1b2c3d4e5",
+    config: { model_name: "meta-llama/Llama-3.2-3B", quantization: "none", batch_size: 1, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.05, latency_p50_ms: 22.5, latency_p95_ms: 30.0, latency_p99_ms: 38.0, tokens_per_sec: 44.4, total_tokens: 13320, gpu_power_avg_w: 62.0, gpu_power_max_w: 85.0, energy_per_token_j: 1.396, gpu_util_avg_pct: 92.0, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 1700, gpu_temp_avg_c: 62.5, gpu_temp_max_c: 78.0, thermal_throttled: false, mem_used_gb: 18.5, mem_available_gb: 109.5, mem_pressure_pct: 14.5, nvme_temp_c: 40.2, system_load_avg: 4.5, sci_per_token: 0.000120, carbon_operational_g: 0.000058, carbon_embodied_g: 0.000062, energy_kwh_per_token: 3.878e-7, gpu_efficiency: 0.716, cost_per_token_usd: 4.65e-8 },
+    status: "completed", strategy_used: "grid", pareto_rank: 1, created_at: "2026-03-28T13:00:00+00:00", error_message: null
+  },
+  {
+    config_hash: "a2b3c4d5e6f7",
+    config: { model_name: "meta-llama/Llama-3.2-3B", quantization: "gptq-4bit", batch_size: 2, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.10, latency_p50_ms: 15.5, latency_p95_ms: 21.0, latency_p99_ms: 26.5, tokens_per_sec: 78.0, total_tokens: 23400, gpu_power_avg_w: 45.0, gpu_power_max_w: 70.0, energy_per_token_j: 0.577, gpu_util_avg_pct: 85.0, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 1850, gpu_temp_avg_c: 54.0, gpu_temp_max_c: 70.0, thermal_throttled: false, mem_used_gb: 10.2, mem_available_gb: 117.8, mem_pressure_pct: 8.0, nvme_temp_c: 38.0, system_load_avg: 3.5, sci_per_token: 0.000062, carbon_operational_g: 0.000028, carbon_embodied_g: 0.000034, energy_kwh_per_token: 1.603e-7, gpu_efficiency: 1.733, cost_per_token_usd: 1.92e-8 },
+    status: "completed", strategy_used: "bayesian", pareto_rank: 0, created_at: "2026-03-28T13:10:00+00:00", error_message: null
+  },
+  {
+    config_hash: "b3c4d5e6f7a2",
+    config: { model_name: "meta-llama/Llama-3.2-3B", quantization: "awq-4bit", batch_size: 4, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.09, latency_p50_ms: 16.0, latency_p95_ms: 22.5, latency_p99_ms: 28.0, tokens_per_sec: 92.0, total_tokens: 27600, gpu_power_avg_w: 48.0, gpu_power_max_w: 72.0, energy_per_token_j: 0.522, gpu_util_avg_pct: 90.5, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 1950, gpu_temp_avg_c: 56.0, gpu_temp_max_c: 72.5, thermal_throttled: false, mem_used_gb: 11.0, mem_available_gb: 117.0, mem_pressure_pct: 8.6, nvme_temp_c: 38.5, system_load_avg: 4.0, sci_per_token: 0.000055, carbon_operational_g: 0.000024, carbon_embodied_g: 0.000031, energy_kwh_per_token: 1.450e-7, gpu_efficiency: 1.917, cost_per_token_usd: 1.74e-8 },
+    status: "completed", strategy_used: "bayesian", pareto_rank: 0, created_at: "2026-03-28T13:20:00+00:00", error_message: null
+  },
+  {
+    config_hash: "c4d5e6f7a2b3",
+    config: { model_name: "meta-llama/Llama-3.2-3B", quantization: "gptq-8bit", batch_size: 1, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.06, latency_p50_ms: 20.0, latency_p95_ms: 27.5, latency_p99_ms: 34.0, tokens_per_sec: 50.0, total_tokens: 15000, gpu_power_avg_w: 55.0, gpu_power_max_w: 78.0, energy_per_token_j: 1.100, gpu_util_avg_pct: 88.0, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 1750, gpu_temp_avg_c: 60.0, gpu_temp_max_c: 75.0, thermal_throttled: false, mem_used_gb: 15.0, mem_available_gb: 113.0, mem_pressure_pct: 11.7, nvme_temp_c: 39.5, system_load_avg: 4.2, sci_per_token: 0.000098, carbon_operational_g: 0.000045, carbon_embodied_g: 0.000053, energy_kwh_per_token: 3.056e-7, gpu_efficiency: 0.909, cost_per_token_usd: 3.67e-8 },
+    status: "completed", strategy_used: "grid", pareto_rank: 0, created_at: "2026-03-28T13:30:00+00:00", error_message: null
+  },
+  {
+    config_hash: "d5e6f7a2b3c4",
+    config: { model_name: "meta-llama/Llama-3.2-1B", quantization: "awq-4bit", batch_size: 8, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.23, latency_p50_ms: 13.0, latency_p95_ms: 18.5, latency_p99_ms: 23.0, tokens_per_sec: 185.0, total_tokens: 55500, gpu_power_avg_w: 52.0, gpu_power_max_w: 75.0, energy_per_token_j: 0.281, gpu_util_avg_pct: 95.0, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 2100, gpu_temp_avg_c: 58.0, gpu_temp_max_c: 73.0, thermal_throttled: false, mem_used_gb: 9.5, mem_available_gb: 118.5, mem_pressure_pct: 7.4, nvme_temp_c: 38.8, system_load_avg: 5.2, sci_per_token: 0.000036, carbon_operational_g: 0.000015, carbon_embodied_g: 0.000021, energy_kwh_per_token: 7.81e-8, gpu_efficiency: 3.558, cost_per_token_usd: 9.37e-9 },
+    status: "completed", strategy_used: "bayesian", pareto_rank: 0, created_at: "2026-03-28T13:40:00+00:00", error_message: null
+  },
+  {
+    config_hash: "e6f7a2b3c4d5",
+    config: { model_name: "meta-llama/Llama-3.2-3B", quantization: "awq-8bit", batch_size: 2, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.07, latency_p50_ms: 18.5, latency_p95_ms: 25.0, latency_p99_ms: 31.5, tokens_per_sec: 58.0, total_tokens: 17400, gpu_power_avg_w: 52.0, gpu_power_max_w: 76.0, energy_per_token_j: 0.897, gpu_util_avg_pct: 87.0, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 1800, gpu_temp_avg_c: 58.5, gpu_temp_max_c: 74.0, thermal_throttled: false, mem_used_gb: 14.0, mem_available_gb: 114.0, mem_pressure_pct: 10.9, nvme_temp_c: 39.0, system_load_avg: 3.8, sci_per_token: 0.000082, carbon_operational_g: 0.000038, carbon_embodied_g: 0.000044, energy_kwh_per_token: 2.492e-7, gpu_efficiency: 1.115, cost_per_token_usd: 2.99e-8 },
+    status: "completed", strategy_used: "random", pareto_rank: 0, created_at: "2026-03-28T13:50:00+00:00", error_message: null
+  },
+  {
+    config_hash: "f7a2b3c4d5e6",
+    config: { model_name: "meta-llama/Llama-3.2-1B", quantization: "awq-8bit", batch_size: 2, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.20, latency_p50_ms: 11.5, latency_p95_ms: 16.0, latency_p99_ms: 20.5, tokens_per_sec: 88.0, total_tokens: 26400, gpu_power_avg_w: 40.0, gpu_power_max_w: 62.0, energy_per_token_j: 0.455, gpu_util_avg_pct: 78.0, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 1950, gpu_temp_avg_c: 50.0, gpu_temp_max_c: 64.0, thermal_throttled: false, mem_used_gb: 6.0, mem_available_gb: 122.0, mem_pressure_pct: 4.7, nvme_temp_c: 36.5, system_load_avg: 2.8, sci_per_token: 0.000052, carbon_operational_g: 0.000023, carbon_embodied_g: 0.000029, energy_kwh_per_token: 1.264e-7, gpu_efficiency: 2.200, cost_per_token_usd: 1.52e-8 },
+    status: "completed", strategy_used: "grid", pareto_rank: 1, created_at: "2026-03-28T14:00:00+00:00", error_message: null
+  },
+  {
+    config_hash: "a3b4c5d6e7f8",
+    config: { model_name: "meta-llama/Llama-3.2-1B", quantization: "gptq-4bit", batch_size: 8, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.25, latency_p50_ms: 12.5, latency_p95_ms: 17.8, latency_p99_ms: 22.0, tokens_per_sec: 172.0, total_tokens: 51600, gpu_power_avg_w: 50.0, gpu_power_max_w: 73.0, energy_per_token_j: 0.291, gpu_util_avg_pct: 94.0, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 2050, gpu_temp_avg_c: 57.0, gpu_temp_max_c: 72.0, thermal_throttled: false, mem_used_gb: 8.8, mem_available_gb: 119.2, mem_pressure_pct: 6.9, nvme_temp_c: 38.2, system_load_avg: 5.0, sci_per_token: 0.000037, carbon_operational_g: 0.000015, carbon_embodied_g: 0.000022, energy_kwh_per_token: 8.08e-8, gpu_efficiency: 3.440, cost_per_token_usd: 9.70e-9 },
+    status: "completed", strategy_used: "bayesian", pareto_rank: 1, created_at: "2026-03-28T14:10:00+00:00", error_message: null
+  },
+  {
+    config_hash: "b4c5d6e7f8a3",
+    config: { model_name: "meta-llama/Llama-3.2-3B", quantization: "gptq-4bit", batch_size: 4, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.11, latency_p50_ms: 17.0, latency_p95_ms: 23.5, latency_p99_ms: 29.0, tokens_per_sec: 105.0, total_tokens: 31500, gpu_power_avg_w: 50.0, gpu_power_max_w: 74.0, energy_per_token_j: 0.476, gpu_util_avg_pct: 91.0, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 1900, gpu_temp_avg_c: 57.5, gpu_temp_max_c: 73.5, thermal_throttled: false, mem_used_gb: 12.5, mem_available_gb: 115.5, mem_pressure_pct: 9.8, nvme_temp_c: 39.0, system_load_avg: 4.5, sci_per_token: 0.000052, carbon_operational_g: 0.000022, carbon_embodied_g: 0.00003, energy_kwh_per_token: 1.322e-7, gpu_efficiency: 2.100, cost_per_token_usd: 1.59e-8 },
+    status: "completed", strategy_used: "bayesian", pareto_rank: 0, created_at: "2026-03-28T14:20:00+00:00", error_message: null
+  },
+  {
+    config_hash: "c5d6e7f8a3b4",
+    config: { model_name: "meta-llama/Llama-3.2-3B", quantization: "none", batch_size: 4, sequence_length: 512, max_new_tokens: 128, temperature: 1.0, use_kv_cache: true, dtype: "float16", time_budget_sec: 300 },
+    metrics: { val_bpb: 1.05, latency_p50_ms: 25.0, latency_p95_ms: 33.0, latency_p99_ms: 42.0, tokens_per_sec: 62.0, total_tokens: 18600, gpu_power_avg_w: 68.0, gpu_power_max_w: 90.0, energy_per_token_j: 1.097, gpu_util_avg_pct: 94.0, gpu_clock_avg_mhz: 2400, gpu_clock_min_mhz: 1650, gpu_temp_avg_c: 65.0, gpu_temp_max_c: 80.0, thermal_throttled: false, mem_used_gb: 22.0, mem_available_gb: 106.0, mem_pressure_pct: 17.2, nvme_temp_c: 41.0, system_load_avg: 5.5, sci_per_token: 0.000105, carbon_operational_g: 0.000048, carbon_embodied_g: 0.000057, energy_kwh_per_token: 3.047e-7, gpu_efficiency: 0.912, cost_per_token_usd: 3.66e-8 },
+    status: "completed", strategy_used: "grid", pareto_rank: 1, created_at: "2026-03-28T14:30:00+00:00", error_message: null
+  }
+];
 const BENCHMARK_DATA = [
   {
     config_hash: "a1b2c3d4e5f6",
