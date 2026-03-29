@@ -4,18 +4,18 @@
    Requires: data.js (BENCHMARK_DATA, CARBON_PRESETS), Chart.js
    ========================================================================== */
 
-// ─── MTA Color Palette ─────────────────────────────────────────────────────────
+// ─── Cyberpunk Color Palette ───────────────────────────────────────────────────
 const MTA = {
-  red: "#EE352E", green: "#00933C", yellow: "#FCCC0A", blue: "#0039A6",
-  orange: "#FF6319", purple: "#B933AD", gray: "#808183", lime: "#6CBE45",
-  black: "#000000", white: "#FFFFFF"
+  red: "#E03030", green: "#5DB800", yellow: "#D4860A", blue: "#00C8A0",
+  orange: "#C8470A", purple: "#9B59B6", gray: "#444444", lime: "#76FF03",
+  black: "#080808", white: "#E8E8E8"
 };
 
-// Model → Subway Line mapping
+// Model color mapping
 const MODEL_LINES = {
-  "Qwen3.5-0.8B": { bg: MTA.green, border: "#006B2B", circle: "green", letter: "1", label: "Line 1 (0.8B)" },
-  "Qwen3.5-4B":   { bg: MTA.yellow, border: "#D4AB00", circle: "yellow", letter: "2", label: "Line 2 (4B)" },
-  "Qwen3.5-9B":   { bg: MTA.red, border: "#C42B25", circle: "red", letter: "3", label: "Line 3 (9B)" }
+  "Qwen3.5-0.8B": { bg: MTA.green,  border: "#3A7A00", circle: "green",  letter: "1", label: "Model 1 (0.8B)" },
+  "Qwen3.5-4B":   { bg: MTA.yellow, border: "#9A6000", circle: "yellow", letter: "2", label: "Model 2 (4B)" },
+  "Qwen3.5-9B":   { bg: MTA.red,    border: "#A02020", circle: "red",    letter: "3", label: "Model 3 (9B)" }
 };
 
 function getModelLine(modelName) {
@@ -418,7 +418,7 @@ function openDetailModal(exp) {
   modalLatencyChart = new Chart(latCtx, {
     type: "bar",
     data: { labels: ["P50","P95","P99"], datasets: [{ data: [m.latency_p50_ms, m.latency_p95_ms, m.latency_p99_ms], backgroundColor: [MTA.blue, MTA.green, MTA.orange], borderRadius: 4, barPercentage: .5 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: "ms" }, beginAtZero: true, grid: { color: "rgba(0,0,0,.05)" } }, x: { grid: { display: false } } } }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: "ms" }, beginAtZero: true, grid: { color: "rgba(255,255,255,0.05)" } }, x: { grid: { display: false } } } }
   });
 
   const overlay = document.getElementById("detail-modal");
@@ -491,12 +491,12 @@ function updateCalculator() {
     data: {
       labels: pairs.map(p => p.region.split(" (")[0]),
       datasets: [{ label: "SCI (µg)", data: pairs.map(p => p.sci),
-        backgroundColor: pairs.map(p => p.selected ? MTA.green : "#E0E0E0"), borderRadius: 4, barPercentage: .7 }]
+        backgroundColor: pairs.map(p => p.selected ? MTA.green : "#2A2A2A"), borderRadius: 4, barPercentage: .7 }]
     },
     options: {
       indexAxis: "y", responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.x.toFixed(2) + " µgCO₂/tok" } } },
-      scales: { x: { title: { display: true, text: "SCI (µgCO₂/token)" }, grid: { color: "rgba(0,0,0,.05)" } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
+      scales: { x: { title: { display: true, text: "SCI (µgCO₂/token)" }, grid: { color: "rgba(255,255,255,0.05)" } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
     }
   });
 }
@@ -577,13 +577,13 @@ function renderPerModelCharts() {
           x: {
             type: "logarithmic",
             title: { display: true, text: "tok/s (log)", font: { size: 11, weight: "600" } },
-            grid: { color: "rgba(0,0,0,.06)" },
+            grid: { color: "rgba(255,255,255,0.05)" },
             ticks: { font: { size: 10 } }
           },
           y: {
             type: "logarithmic",
             title: { display: true, text: "SCI (\u00b5gCO\u2082/tok, log)", font: { size: 11, weight: "600" } },
-            grid: { color: "rgba(0,0,0,.06)" },
+            grid: { color: "rgba(255,255,255,0.05)" },
             ticks: { font: { size: 10 } }
           }
         },
@@ -687,7 +687,7 @@ function renderScalingLawCharts() {
               return ctx.dataset.label;
             }
           },
-          backgroundColor: "#1a1a2e",
+          backgroundColor: "#111111",
           titleColor: "#fff",
           bodyColor: "#fff",
           padding: 12,
@@ -750,7 +750,7 @@ function renderScalingLawCharts() {
           callbacks: {
             label: ctx => `${ctx.parsed.x.toFixed(1)} \u00B5gCO\u2082/token`
           },
-          backgroundColor: "#1a1a2e",
+          backgroundColor: "#111111",
           titleColor: "#fff",
           bodyColor: "#fff",
           padding: 12,
@@ -781,12 +781,12 @@ function renderScalingLawCharts() {
 // ─── 3D Visualizations (Plotly.js) ────────────────────────────────────────────
 
 const PLOTLY_AXIS_STYLE = {
-  showgrid: false,
-  showline: true, linecolor: "#333", linewidth: 2,
+  showgrid: true, gridcolor: "rgba(255,255,255,0.06)",
+  showline: true, linecolor: "#2A2A2A", linewidth: 1,
   showspikes: false, zeroline: false,
-  title: { font: { size: 13, color: "#111", weight: 700 } },
-  tickfont: { size: 11, color: "#444" },
-  backgroundcolor: "rgba(245,245,245,0.15)"
+  title: { font: { size: 13, color: "#888888", weight: 600 } },
+  tickfont: { size: 11, color: "#666666" },
+  backgroundcolor: "rgba(10,10,10,0)"
 };
 const PLOTLY_LOG_AXIS = { ...PLOTLY_AXIS_STYLE, type: "log", dtick: 1 };
 const PLOTLY_LIN_AXIS = { ...PLOTLY_AXIS_STYLE };
@@ -794,10 +794,10 @@ const PLOTLY_LIN_AXIS = { ...PLOTLY_AXIS_STYLE };
 const PLOTLY_LAYOUT_BASE = {
   paper_bgcolor: "rgba(0,0,0,0)",
   plot_bgcolor: "rgba(0,0,0,0)",
-  font: { family: "Inter, sans-serif", size: 12, color: "#333" },
+  font: { family: "Inter, sans-serif", size: 12, color: "#888888" },
   margin: { l: 0, r: 0, t: 40, b: 0 },
   showlegend: true,
-  legend: { x: 0, y: 1, bgcolor: "rgba(255,255,255,0.9)", bordercolor: "#999", borderwidth: 1, font: { size: 12 } }
+  legend: { x: 0, y: 1, bgcolor: "rgba(17,17,17,0.9)", bordercolor: "#2A2A2A", borderwidth: 1, font: { size: 12, color: "#E8E8E8" } }
 };
 
 function render3DPareto() {
@@ -881,11 +881,11 @@ function render3DPareto() {
     z: surfZ,
     surfacecolor: surfColor,
     colorscale: [
-      [0, "#00933C"],
-      [0.25, "#6CBE45"],
-      [0.5, "#FCCC0A"],
-      [0.75, "#FF6319"],
-      [1, "#EE352E"]
+      [0,    "#5DB800"],
+      [0.25, "#76FF03"],
+      [0.5,  "#D4860A"],
+      [0.75, "#C8470A"],
+      [1,    "#E03030"]
     ],
     showscale: true,
     colorbar: {
@@ -963,7 +963,7 @@ function render3DScaling() {
     type: "surface",
     name: "Regression Surface",
     x: surfX, y: surfY, z: surfZ,
-    colorscale: [[0, "rgba(0,147,60,0.15)"], [0.5, "rgba(252,204,10,0.15)"], [1, "rgba(238,53,46,0.15)"]],
+    colorscale: [[0, "rgba(93,184,0,0.12)"], [0.5, "rgba(212,134,10,0.12)"], [1, "rgba(224,48,48,0.12)"]],
     showscale: false,
     opacity: 0.4,
     hoverinfo: "skip"

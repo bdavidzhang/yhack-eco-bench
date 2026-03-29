@@ -14,10 +14,10 @@ export const REGIONS = [
 export type Region = typeof REGIONS[number]
 
 export function sciToColor(sci: number): string {
-  if (sci < 50)  return '#1D9E75'  // green
-  if (sci < 80)  return '#EF9F27'  // amber
-  if (sci < 110) return '#D85A30'  // orange
-  return '#E24B4A'                  // red
+  if (sci < 50)  return '#5DB800'  // cyber green — low carbon
+  if (sci < 80)  return '#D4860A'  // cyber amber — medium
+  if (sci < 110) return '#C8470A'  // cyber orange — high
+  return '#E03030'                  // cyber red — critical
 }
 
 export function latLonToVector3(lat: number, lon: number, radius = 1.05): THREE.Vector3 {

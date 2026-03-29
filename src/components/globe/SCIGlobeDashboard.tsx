@@ -52,7 +52,7 @@ function LegendBar() {
           width: 120,
           height: 6,
           borderRadius: 3,
-          background: 'linear-gradient(to right, #1D9E75, #EF9F27, #D85A30, #E24B4A)',
+          background: 'linear-gradient(to right, #5DB800, #D4860A, #C8470A, #E03030)',
         }} />
         <span>High</span>
       </div>
@@ -87,9 +87,9 @@ function MetricCard({ label, value, sub }: MetricCardProps) {
 // ── Task selector card ────────────────────────────────────────────────────────
 
 const TASKS: { id: 'code' | 'reason' | 'summ'; label: string; badgeColor: string; badgeText: string }[] = [
-  { id: 'code',   label: 'Code generation', badgeColor: '#0039A6', badgeText: 'High quality' },
-  { id: 'reason', label: 'Reasoning',       badgeColor: '#1D9E75', badgeText: 'Balanced'     },
-  { id: 'summ',   label: 'Summarization',   badgeColor: '#EF9F27', badgeText: 'Efficiency'   },
+  { id: 'code',   label: 'Code generation', badgeColor: '#00C8A0', badgeText: 'High quality' },
+  { id: 'reason', label: 'Reasoning',       badgeColor: '#5DB800', badgeText: 'Balanced'     },
+  { id: 'summ',   label: 'Summarization',   badgeColor: '#D4860A', badgeText: 'Efficiency'   },
 ]
 
 interface TaskCardProps {
@@ -120,8 +120,8 @@ function TaskCard({ onTaskChange }: TaskCardProps) {
               alignItems: 'center',
               width: '100%',
               padding: '8px 10px',
-              background: activeTask === t.id ? 'rgba(29,158,117,0.08)' : 'transparent',
-              border: activeTask === t.id ? '1px solid #1D9E75' : '1px solid var(--color-border-tertiary)',
+              background: activeTask === t.id ? 'rgba(93,184,0,0.08)' : 'transparent',
+              border: activeTask === t.id ? '1px solid #5DB800' : '1px solid var(--color-border-tertiary)',
               borderRadius: 'var(--border-radius-md)',
               cursor: 'pointer',
               fontSize: 13,
@@ -171,13 +171,13 @@ function ModelRankingCard() {
           <div key={m.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
               width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-              background: m.best ? '#1D9E75' : 'transparent',
+              background: m.best ? '#5DB800' : 'transparent',
               border: m.best ? 'none' : '1.5px solid var(--color-border-tertiary)',
             }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, color: 'var(--color-text-primary)', fontWeight: m.best ? 600 : 400 }}>
                 {m.name}
-                {m.best && <span style={{ marginLeft: 4, color: '#1D9E75' }}>✦</span>}
+                {m.best && <span style={{ marginLeft: 4, color: '#76FF03' }}>✦</span>}
               </div>
               <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 1 }}>{m.note}</div>
             </div>
@@ -273,7 +273,7 @@ export function SCIGlobeDashboard() {
   const region = activeRegion()
   const models = activeModels()
   const saved  = savedVsWorst()
-  const savedColor = saved >= 30 ? '#1D9E75' : '#EF9F27'
+  const savedColor = saved >= 30 ? '#5DB800' : '#D4860A'
 
   const flyToActive = () => {
     sceneRef.current?.flyTo(useGlobeStore.getState().activeRegionId)

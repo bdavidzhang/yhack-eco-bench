@@ -9,7 +9,7 @@ import type { Topology, GeometryCollection } from 'topojson-specification'
 // ── Atmosphere shader ────────────────────────────────────────────────────────
 
 const AtmosphereMaterial = shaderMaterial(
-  { uColor: new THREE.Color(0.1, 0.4, 0.9) },
+  { uColor: new THREE.Color(0.3, 0.7, 1.0) },
   /* vertex */ `
     varying vec3 vNormal;
     void main() {
@@ -72,7 +72,7 @@ export function GlobeMesh() {
         const pathGen = d3.geoPath(projection, ctx)
 
         ctx.clearRect(0, 0, 2048, 1024)
-        ctx.fillStyle = 'rgba(30, 58, 110, 0.7)'
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.90)'
         ctx.beginPath()
         pathGen(geojson)
         ctx.fill()
@@ -98,7 +98,7 @@ export function GlobeMesh() {
       {/* Layer 1 — ocean base */}
       <mesh>
         <sphereGeometry args={[1, 64, 64]} />
-        <meshPhongMaterial color="#0a1628" specular="#1a3a6e" shininess={25} />
+        <meshPhongMaterial color="#060F04" specular="#0A2A06" shininess={25} />
       </mesh>
 
       {/* Layer 2 — land texture (filled after async fetch) */}
@@ -115,7 +115,7 @@ export function GlobeMesh() {
       <mesh>
         <sphereGeometry args={[1.18, 64, 64]} />
           <atmosphereMaterial
-          uColor={new THREE.Color(0.1, 0.4, 0.9)}
+          uColor={new THREE.Color(0.3, 0.7, 1.0)}
           transparent
           blending={THREE.AdditiveBlending}
           side={THREE.BackSide}
