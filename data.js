@@ -5,7 +5,7 @@
    ========================================================================== */
 
 // ─── Real Benchmark Data from DGX Spark Runs ──────────────────────────────────
-// 39 unique completed configs across 21 experiment runs on NVIDIA DGX Spark (Blackwell GB10)
+// 66 unique experiments (42 completed, 42 total incl. reruns) across 21 runs on NVIDIA DGX Spark (Blackwell GB10)
 // Models: Qwen3.5-0.8B, Qwen3.5-4B, Qwen3.5-9B | Quantization: FP16/BF16 (no quant)
 // Pareto frontier computed on (SCI ↓, BPB ↓) — 3 configs on frontier
 const BENCHMARK_DATA = 

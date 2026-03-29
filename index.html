@@ -45,7 +45,7 @@
     <div class="mta-container">
       <div class="mta-hero__layout">
         <div>
-          <p class="mta-hero__eyebrow">YHack 2026 &middot; ASUS Sustainability Track</p>
+          <p class="mta-hero__eyebrow">YHack 2026</p>
           <h1 class="mta-hero__title">
             How much<br>
             <span class="mta-hero__accent">CO<sub>2</sub></span><br>
@@ -54,8 +54,8 @@
           </h1>
           <div class="mta-hero__circles">
             <span class="mta-circle mta-circle--lg mta-circle--green" title="Qwen 0.8B">1</span>
-            <span class="mta-circle mta-circle--lg mta-circle--yellow" title="Qwen 4B">4</span>
-            <span class="mta-circle mta-circle--lg mta-circle--red" title="Qwen 9B">9</span>
+            <span class="mta-circle mta-circle--lg mta-circle--yellow" title="Qwen 4B">2</span>
+            <span class="mta-circle mta-circle--lg mta-circle--red" title="Qwen 9B">3</span>
           </div>
         </div>
         <div class="mta-hero__right">
@@ -107,6 +107,18 @@
         <div class="mta-legend" id="pareto-legend" aria-label="Chart legend"></div>
         <div class="mta-chart-canvas"><canvas id="pareto-chart" role="img" aria-label="Pareto frontier scatter plot"></canvas></div>
       </div>
+    </div>
+  </section>
+
+  <!-- Per-Model Analysis -->
+  <section class="mta-section" aria-labelledby="permodel-heading">
+    <div class="mta-container">
+      <div class="mb-24">
+        <h2 class="t-h2" id="permodel-heading">Per-Model Analysis: Throughput vs Carbon</h2>
+        <p class="t-small t-muted mt-8">Each chart shows one model family. X&nbsp;=&nbsp;tok/s, Y&nbsp;=&nbsp;SCI. Point size reflects batch size. Log-log scale.</p>
+      </div>
+      <div class="mta-permodel-grid" id="permodel-grid"></div>
+      <div class="mta-permodel-legend" id="permodel-legend"></div>
     </div>
   </section>
 
@@ -283,14 +295,10 @@
   <div class="mta-footer__inner">
     <div>
       <div class="mta-footer__brand">Green LLM Bench</div>
-      <p class="t-small mt-8">Built at YHack &bull; Yale's Hackathon &bull; ASUS Sustainability</p>
+      <p class="t-small mt-8">Built at YHack &bull; Yale's Hackathon</p>
     </div>
     <div>
       <p class="t-small">Powered by <strong style="color:#fff">NVIDIA DGX Spark</strong><br>SCI Standard: ISO/IEC 21031:2024</p>
-    </div>
-    <div>
-      <p class="t-small">Design: MTA-inspired signage system<br>
-        <a href="https://github.com/cultureamp/kaizen-design-system">Open Source</a></p>
     </div>
   </div>
 </footer>

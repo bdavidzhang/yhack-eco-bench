@@ -14,8 +14,8 @@ const MTA = {
 // Model → Subway Line mapping
 const MODEL_LINES = {
   "Qwen3.5-0.8B": { bg: MTA.green, border: "#006B2B", circle: "green", letter: "1", label: "Line 1 (0.8B)" },
-  "Qwen3.5-4B":   { bg: MTA.yellow, border: "#D4AB00", circle: "yellow", letter: "4", label: "Line 4 (4B)" },
-  "Qwen3.5-9B":   { bg: MTA.red, border: "#C42B25", circle: "red", letter: "9", label: "Line 9 (9B)" }
+  "Qwen3.5-4B":   { bg: MTA.yellow, border: "#D4AB00", circle: "yellow", letter: "2", label: "Line 2 (4B)" },
+  "Qwen3.5-9B":   { bg: MTA.red, border: "#C42B25", circle: "red", letter: "3", label: "Line 3 (9B)" }
 };
 
 function getModelLine(modelName) {
@@ -580,9 +580,116 @@ function updateCalculator() {
   });
 }
 
+
+// ─── Per-Model Analysis Charts ──────────────────────────────────────────────────
+const perModelCharts = [];
+
+const BATCH_SIZES = [1, 2, 4, 8, 16, 32];
+const BATCH_RADII = { 1: 4, 2: 6, 4: 8, 8: 11, 16: 15, 32: 20 };
+
+function renderPerModelCharts() {
+  const data = completedData();
+  const models = [...new Set(data.map(d => shortModel(d.config.model_name)))].sort();
+  const grid = document.getElementById("permodel-grid");
+  grid.innerHTML = "";
+  perModelCharts.forEach(c => c.destroy());
+  perModelCharts.length = 0;
+
+  models.forEach(model => {
+    const ml = MODEL_LINES[model] || { bg: MTA.gray, border: "#666", circle: "gray", letter: "?", label: model };
+    const points = data.filter(d => shortModel(d.config.model_name) === model);
+    const avgBpb = (points.reduce((s, p) => s + p.metrics.val_bpb, 0) / points.length).toFixed(2);
+
+    const card = document.createElement("div");
+    card.className = "mta-permodel-card";
+    card.innerHTML =
+      `<div class="mta-permodel-card__header">
+        <div class="mta-permodel-card__title">
+          <span class="mta-circle mta-circle--sm mta-circle--${ml.circle}">${ml.letter}</span>
+          <span style="color:${ml.bg}">${model}</span>
+        </div>
+        <div class="mta-permodel-card__subtitle">${points.length} experiments &middot; BPB=${avgBpb}</div>
+      </div>
+      <div class="mta-permodel-card__canvas"><canvas></canvas></div>`;
+    grid.appendChild(card);
+
+    const ctx = card.querySelector("canvas").getContext("2d");
+    const chartData = points.map(p => ({
+      x: p.metrics.tokens_per_sec,
+      y: p.metrics.sci_per_token * 1e6,
+      r: BATCH_RADII[p.config.batch_size] || 6,
+      _raw: p
+    }));
+
+    const chart = new Chart(ctx, {
+      type: "bubble",
+      data: {
+        datasets: [{
+          label: model,
+          data: chartData,
+          backgroundColor: ml.bg + "AA",
+          borderColor: ml.border,
+          borderWidth: 1.5,
+          hoverBorderWidth: 2.5
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                const r = ctx.raw._raw;
+                return [
+                  quantLabel(r.config.quantization) + " | batch=" + r.config.batch_size,
+                  r.metrics.tokens_per_sec.toFixed(1) + " tok/s",
+                  (r.metrics.sci_per_token * 1e6).toFixed(1) + " \u00b5gCO\u2082/tok"
+                ];
+              }
+            },
+            backgroundColor: MTA.black, titleColor: MTA.white, bodyColor: MTA.white,
+            padding: 10, cornerRadius: 4
+          }
+        },
+        scales: {
+          x: {
+            type: "logarithmic",
+            title: { display: true, text: "tok/s (log)", font: { size: 11, weight: "600" } },
+            grid: { color: "rgba(0,0,0,.06)" },
+            ticks: { font: { size: 10 } }
+          },
+          y: {
+            type: "logarithmic",
+            title: { display: true, text: "SCI (\u00b5gCO\u2082/tok, log)", font: { size: 11, weight: "600" } },
+            grid: { color: "rgba(0,0,0,.06)" },
+            ticks: { font: { size: 10 } }
+          }
+        },
+        onClick(_, elements) {
+          if (elements.length > 0) {
+            const raw = chartData[elements[0].index]._raw;
+            if (raw) openDetailModal(raw);
+          }
+        }
+      }
+    });
+    perModelCharts.push(chart);
+  });
+
+  // Shared batch-size legend
+  const legendEl = document.getElementById("permodel-legend");
+  legendEl.innerHTML = BATCH_SIZES.map(bs => {
+    const r = BATCH_RADII[bs] || 6;
+    return `<span class="mta-permodel-legend__item">
+      <span class="mta-permodel-legend__dot" style="width:${r * 2}px;height:${r * 2}px;background:${MTA.gray}AA"></span>
+      batch=${bs}</span>`;
+  }).join("");
+}
+
 // ─── Initialize ─────────────────────────────────────────────────────────────────
 function init() {
-  renderStatsBar(); renderParetoChart(); renderPreviewTable();
+  renderStatsBar(); renderParetoChart(); renderPerModelCharts(); renderPreviewTable();
   populateFilters(); renderLeaderboard();
   document.querySelectorAll("#leaderboard-tabs .mta-tab").forEach((t, i) => t.setAttribute("tabindex", i === 0 ? "0" : "-1"));
   pageInitialized.dashboard = true; pageInitialized.leaderboards = true;
