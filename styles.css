@@ -1,41 +1,36 @@
 /* ==========================================================================
    Green LLM Bench — MTA Design System
-   Inspired by NYC Metropolitan Transportation Authority signage & maps
-   Typography: Helvetica Neue / Inter (MTA typeface family)
-   Colors: Official MTA line colors for data visualization
+   NYC Metropolitan Transportation Authority signage & Vignelli map
+   Font: Helvetica Neue (official MTA typeface)
    ========================================================================== */
 
-/* ---------- Design Tokens ------------------------------------------------ */
 :root {
   /* Official MTA Line Colors */
-  --mta-red: #EE352E;     /* 1/2/3 */
-  --mta-green: #00933C;   /* 4/5/6 */
-  --mta-yellow: #FCCC0A;  /* N/Q/R/W */
-  --mta-blue: #0039A6;    /* A/C/E */
-  --mta-orange: #FF6319;  /* B/D/F/M */
-  --mta-purple: #B933AD;  /* 7 */
-  --mta-gray: #808183;    /* S Shuttle */
-  --mta-brown: #996633;   /* J/Z */
-  --mta-lime: #6CBE45;    /* G */
+  --mta-red: #EE352E;
+  --mta-green: #00933C;
+  --mta-yellow: #FCCC0A;
+  --mta-blue: #0039A6;
+  --mta-orange: #FF6319;
+  --mta-purple: #B933AD;
+  --mta-gray: #808183;
+  --mta-lime: #6CBE45;
 
   /* Surfaces */
   --bg: #F5F5F5;
   --surface: #FFFFFF;
   --text: #000000;
   --text-muted: #555555;
-  --text-light: #888888;
   --border: #D4D4D4;
   --border-light: #E8E8E8;
 
-  /* Typography */
-  --font: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --mono: "SF Mono", "Consolas", monospace;
+  /* Typography — Helvetica is THE MTA font */
+  --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", Consolas, monospace;
 
   /* Spacing */
   --s4: 4px; --s8: 8px; --s12: 12px; --s16: 16px;
   --s24: 24px; --s32: 32px; --s48: 48px; --s64: 64px;
 
-  /* Layout */
   --max-w: 1200px;
   --nav-h: 60px;
   --r: 4px;
@@ -47,12 +42,12 @@ html { scroll-behavior: smooth; }
 body {
   font-family: var(--font); font-size: 16px; line-height: 1.5;
   color: var(--text); background: var(--bg);
-  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
 }
 a { color: var(--mta-blue); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* ---------- Accessibility ------------------------------------------------ */
+/* ---------- A11y --------------------------------------------------------- */
 .mta-skip {
   position: absolute; top: -100%; left: var(--s16); z-index: 999;
   padding: var(--s8) var(--s16); background: var(--mta-blue); color: #fff;
@@ -65,15 +60,14 @@ a:hover { text-decoration: underline; }
 }
 
 /* ---------- Typography --------------------------------------------------- */
-.t-hero   { font-weight: 900; font-size: clamp(44px, 7vw, 80px); line-height: .95; letter-spacing: -.04em; }
-.t-display{ font-weight: 800; font-size: clamp(28px, 4vw, 48px); line-height: 1.05; letter-spacing: -.025em; }
-.t-h1     { font-weight: 700; font-size: 32px; line-height: 1.15; letter-spacing: -.015em; }
-.t-h2     { font-weight: 700; font-size: 24px; line-height: 1.2; letter-spacing: -.01em; }
-.t-h3     { font-weight: 700; font-size: 18px; line-height: 1.3; }
-.t-h4     { font-weight: 700; font-size: 15px; line-height: 1.4; }
-.t-body   { font-size: 16px; line-height: 1.5; }
-.t-small  { font-size: 14px; line-height: 1.45; }
-.t-xs     { font-size: 12px; line-height: 1.35; }
+.t-hero   { font-weight: 700; font-size: clamp(44px, 7vw, 80px); line-height: .92; letter-spacing: -.03em; }
+.t-display{ font-weight: 700; font-size: clamp(28px, 4vw, 48px); line-height: 1.0; letter-spacing: -.02em; }
+.t-h1     { font-weight: 700; font-size: 32px; line-height: 1.1; letter-spacing: -.01em; }
+.t-h2     { font-weight: 700; font-size: 24px; line-height: 1.15; letter-spacing: -.01em; }
+.t-h3     { font-weight: 700; font-size: 18px; line-height: 1.25; }
+.t-h4     { font-weight: 700; font-size: 15px; line-height: 1.35; }
+.t-small  { font-size: 14px; line-height: 1.4; }
+.t-xs     { font-size: 12px; line-height: 1.3; }
 .t-muted  { color: var(--text-muted); }
 .t-bold   { font-weight: 700; }
 .t-mono   { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -86,6 +80,13 @@ a:hover { text-decoration: underline; }
 .mta-section--sm { padding: var(--s32) 0; }
 .mta-page { display: none; }
 .mta-page.is-active { display: block; }
+
+/* ---------- MTA Horizontal Rule (station sign divider) ------------------- */
+.mta-rule { border: none; border-top: 2px solid #000; margin: 0; }
+.mta-rule--thin { border-top-width: 1px; }
+.mta-rule--light { border-top-color: rgba(0,0,0,.15); }
+.mta-rule--white { border-top-color: #fff; }
+.mta-rule--muted { border-top-color: rgba(255,255,255,.25); }
 
 /* ---------- MTA Circle Badge --------------------------------------------- */
 .mta-circle {
@@ -108,12 +109,28 @@ a:hover { text-decoration: underline; }
 .mta-circle--purple { background: var(--mta-purple); }
 .mta-circle--gray   { background: var(--mta-gray); }
 .mta-circle--lime   { background: var(--mta-lime); }
+.mta-circle--black  { background: #000; }
+.mta-circle--white  { background: #fff; color: #000; }
+
+/* ---------- MTA Arrow Badge (directional indicator) ---------------------- */
+.mta-arrow {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 48px; height: 48px; border-radius: 50%;
+  font-size: 24px; font-weight: 400; line-height: 1;
+  background: #000; color: #fff; flex-shrink: 0;
+}
+.mta-arrow--sm { width: 36px; height: 36px; font-size: 18px; }
+.mta-arrow--lg { width: 64px; height: 64px; font-size: 32px; }
+.mta-arrow--yellow { background: var(--mta-yellow); color: #000; }
+.mta-arrow--blue   { background: var(--mta-blue); }
+.mta-arrow--green  { background: var(--mta-green); }
+.mta-arrow--white  { background: #fff; color: #000; }
 
 /* ---------- Navigation (Station Sign) ------------------------------------ */
 .mta-nav {
   position: sticky; top: 0; z-index: 100; height: var(--nav-h);
   background: #000; display: flex; align-items: center; padding: 0 var(--s24);
-  border-bottom: 3px solid var(--mta-yellow);
+  border-bottom: 3px solid var(--mta-blue);
 }
 .mta-nav__inner {
   max-width: var(--max-w); width: 100%; margin: 0 auto;
@@ -142,18 +159,19 @@ a:hover { text-decoration: underline; }
 .mta-hero { padding: var(--s64) 0 0; position: relative; overflow: hidden; }
 .mta-hero__layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--s48); align-items: start; }
 .mta-hero__eyebrow {
-  font-size: 13px; font-weight: 600; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: .06em; margin-bottom: var(--s16);
+  font-size: 13px; font-weight: 500; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: var(--s16);
 }
-.mta-hero__title { font-weight: 900; font-size: clamp(36px, 5.5vw, 68px); line-height: .98; letter-spacing: -.035em; }
-.mta-hero__accent { color: var(--mta-green); }
+.mta-hero__title { font-weight: 700; font-size: clamp(36px, 5.5vw, 68px); line-height: .95; letter-spacing: -.035em; }
+.mta-hero__accent { color: var(--mta-blue); }
 .mta-hero__circles { display: flex; gap: var(--s16); margin-top: var(--s32); }
+.mta-hero__arrows { display: flex; gap: var(--s12); margin-top: var(--s24); }
 .mta-hero__right { padding-top: var(--s48); }
-.mta-hero__desc { font-size: 17px; line-height: 1.55; color: var(--text-muted); max-width: 380px; }
+.mta-hero__desc { font-size: 17px; line-height: 1.5; color: var(--text-muted); max-width: 380px; }
 .mta-hero__badges { display: flex; flex-wrap: wrap; gap: var(--s8); margin-top: var(--s24); }
 
 /* Subway Lines Strip */
-.mta-subway-lines { display: flex; gap: 5px; margin: var(--s48) 0 var(--s32); height: 14px; }
+.mta-subway-lines { display: flex; gap: 5px; margin: var(--s32) 0; height: 14px; }
 .mta-subway-line {
   flex: 1; border-radius: 7px;
   display: flex; align-items: center; justify-content: space-evenly; padding: 0 var(--s24);
@@ -162,11 +180,27 @@ a:hover { text-decoration: underline; }
 
 /* Giant Bleed Text */
 .mta-hero__bleed {
-  font-weight: 900; font-size: clamp(80px, 16vw, 260px);
+  font-weight: 700; font-size: clamp(80px, 16vw, 260px);
   line-height: .78; color: #000; letter-spacing: -.04em;
   overflow: hidden; max-height: 140px; margin-top: var(--s16);
   pointer-events: none; user-select: none; opacity: .06;
 }
+
+/* ---------- Section Themes ----------------------------------------------- */
+/* Dark section (black bg, white text — like the subway map phone screen) */
+.mta-section--dark { background: #000; color: #fff; padding: var(--s64) 0; }
+.mta-section--dark .t-muted { color: rgba(255,255,255,.55); }
+.mta-section--dark .mta-chart-card { background: #111; border-color: #333; }
+.mta-section--dark .mta-legend__item { color: rgba(255,255,255,.8); }
+.mta-section--dark .mta-rule { border-top-color: rgba(255,255,255,.25); }
+
+/* Yellow section (MetroCard / station sign accent) */
+.mta-section--yellow { background: var(--mta-yellow); color: #000; padding: var(--s64) 0; }
+.mta-section--yellow .t-muted { color: rgba(0,0,0,.55); }
+.mta-section--yellow .mta-well { background: rgba(255,255,255,.85); border-color: rgba(0,0,0,.15); }
+.mta-section--yellow .mta-card { background: rgba(255,255,255,.9); border-color: rgba(0,0,0,.12); }
+.mta-section--yellow .mta-formula { background: #000; color: #fff; }
+.mta-section--yellow .mta-rule { border-top-color: #000; }
 
 /* ---------- Stats Bar ---------------------------------------------------- */
 .mta-stats {
@@ -175,14 +209,14 @@ a:hover { text-decoration: underline; }
 }
 .mta-stat {
   background: var(--surface); border: 2px solid var(--border);
-  border-left: 4px solid var(--mta-green);
+  border-left: 4px solid var(--mta-blue);
   border-radius: var(--r); padding: var(--s16) var(--s24);
 }
-.mta-stat--count   { border-left-color: var(--mta-orange); }
-.mta-stat--sci     { border-left-color: var(--mta-green); }
-.mta-stat--eff     { border-left-color: var(--mta-blue); }
-.mta-stat--region  { border-left-color: var(--mta-yellow); }
-.mta-stat__label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.mta-stat--count  { border-left-color: var(--mta-orange); }
+.mta-stat--sci    { border-left-color: var(--mta-green); }
+.mta-stat--eff    { border-left-color: var(--mta-blue); }
+.mta-stat--region { border-left-color: var(--mta-yellow); }
+.mta-stat__label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
 .mta-stat__value { font-size: 26px; font-weight: 700; letter-spacing: -.02em; margin-top: 2px; }
 .mta-stat__unit  { font-size: 13px; font-weight: 400; color: var(--text-muted); margin-left: var(--s4); }
 
@@ -195,7 +229,6 @@ a:hover { text-decoration: underline; }
 }
 .mta-badge--dark  { background: #1a1a1a; color: #fff; }
 .mta-badge--green { background: #d1fae5; color: #065f46; }
-.mta-badge--red   { background: #fee2e2; color: #991b1b; }
 .mta-badge--blue  { background: #dbeafe; color: #1e40af; }
 .mta-badge--lg    { padding: var(--s8) var(--s16); font-size: 14px; font-weight: 600; }
 .mta-badge--pareto {
@@ -204,7 +237,7 @@ a:hover { text-decoration: underline; }
   animation: mta-glow 2.5s ease-in-out infinite;
 }
 
-/* ---------- Tag (config labels) ------------------------------------------ */
+/* ---------- Tag ---------------------------------------------------------- */
 .mta-tag {
   display: inline-flex; padding: 2px 8px; border-radius: var(--r);
   font-size: 12px; font-weight: 600; background: var(--border-light); color: var(--text);
@@ -220,10 +253,8 @@ a:hover { text-decoration: underline; }
   border-radius: var(--r); padding: var(--s24); transition: box-shadow .15s;
 }
 .mta-card--elevated { box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-.mta-card--clickable { cursor: pointer; }
-.mta-card--clickable:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); border-color: var(--mta-blue); }
 
-/* Well (methodology) */
+/* Well */
 .mta-well {
   padding: var(--s24); border: 1px solid var(--border); border-radius: var(--r);
   background: var(--surface); margin-bottom: var(--s16);
@@ -259,8 +290,8 @@ a:hover { text-decoration: underline; }
 }
 .mta-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .mta-table th {
-  background: #000; color: #fff; font-weight: 600; font-size: 11px;
-  text-transform: uppercase; letter-spacing: .05em;
+  background: #000; color: #fff; font-weight: 700; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .06em;
   padding: var(--s12) var(--s16); text-align: left; white-space: nowrap;
   position: sticky; top: 0; z-index: 1;
 }
@@ -282,7 +313,6 @@ a:hover { text-decoration: underline; }
 .mta-table tr.--pareto { background: #f0fdf4; }
 .mta-table tr.--pareto:hover { background: #dcfce7; }
 
-/* Score colors */
 .score--good { color: var(--mta-green); font-weight: 600; }
 .score--ok   { color: #b8860b; font-weight: 600; }
 .score--bad  { color: var(--mta-red); font-weight: 600; }
@@ -293,18 +323,17 @@ a:hover { text-decoration: underline; }
   overflow-x: auto; -webkit-overflow-scrolling: touch;
 }
 .mta-tab {
-  padding: var(--s12) var(--s16); font-weight: 600; font-size: 14px;
+  padding: var(--s12) var(--s16); font-weight: 700; font-size: 14px;
   border: none; background: none; cursor: pointer; white-space: nowrap;
   color: var(--text-muted); border-bottom: 3px solid transparent;
   margin-bottom: -3px; transition: all .15s;
 }
 .mta-tab:hover { color: var(--text); }
 .mta-tab.is-selected { color: var(--text); border-bottom-color: var(--mta-blue); }
-.mta-tab:focus-visible { outline: 2px solid var(--mta-blue); outline-offset: -2px; }
 
 /* ---------- Filters ------------------------------------------------------ */
 .mta-filters { display: flex; align-items: center; gap: var(--s16); flex-wrap: wrap; }
-.mta-filters label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.mta-filters label { font-size: 13px; font-weight: 700; color: var(--text-muted); }
 .mta-select {
   padding: var(--s8) var(--s12); border: 2px solid var(--border);
   border-radius: var(--r); font-family: var(--font); font-size: 14px;
@@ -368,22 +397,22 @@ a:hover { text-decoration: underline; }
 .mta-metric--blue   { border-left-color: var(--mta-blue); }
 .mta-metric--yellow { border-left-color: var(--mta-yellow); }
 .mta-metric--red    { border-left-color: var(--mta-red); }
-.mta-metric__label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+.mta-metric__label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
 .mta-metric__value { font-size: 15px; font-weight: 700; margin-top: 2px; }
 .mta-pie-wrap { width: 200px; height: 200px; margin: 0 auto; }
 .mta-latency-wrap { height: 160px; }
 
-/* ---------- Score Bar ---------------------------------------------------- */
+/* Score Bar */
 .mta-score-bar { height: 6px; background: var(--border-light); border-radius: 3px; overflow: hidden; }
 .mta-score-bar__fill { height: 100%; border-radius: 3px; background: var(--mta-green); transition: width .4s ease; }
 
 /* ---------- Footer (MetroCard) ------------------------------------------- */
 .mta-footer {
-  background: #000; color: #fff; padding: var(--s48) var(--s24); margin-top: var(--s64);
+  background: #000; color: #fff; padding: var(--s48) var(--s24); margin-top: 0;
 }
 .mta-footer__stripe {
   height: 4px; margin-bottom: var(--s32); border-radius: 2px;
-  background: linear-gradient(90deg, var(--mta-yellow) 0% 20%, var(--mta-blue) 20% 40%, var(--mta-orange) 40% 55%, var(--mta-green) 55% 70%, var(--mta-red) 70% 85%, var(--mta-purple) 85% 100%);
+  background: linear-gradient(90deg, var(--mta-yellow) 0% 20%, var(--mta-blue) 20% 40%, var(--mta-orange) 40% 55%, var(--mta-green) 55% 70%, var(--mta-blue) 70% 85%, var(--mta-purple) 85% 100%);
 }
 .mta-footer__inner {
   max-width: var(--max-w); margin: 0 auto;
@@ -393,38 +422,25 @@ a:hover { text-decoration: underline; }
 .mta-footer a { color: var(--mta-yellow); }
 .mta-footer .t-small { color: rgba(255,255,255,.55); }
 
-/* ---------- Grid Helpers ------------------------------------------------- */
+/* ---------- Grids -------------------------------------------------------- */
 .mta-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s16); }
 .mta-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s16); }
 .mta-method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--s16); }
 
 /* ---------- Animations --------------------------------------------------- */
-@keyframes mta-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes mta-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0,147,60,.15); }
-  50%      { box-shadow: 0 0 8px 3px rgba(0,147,60,.25); }
-}
+@keyframes mta-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes mta-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(0,147,60,.15); } 50% { box-shadow: 0 0 8px 3px rgba(0,147,60,.25); } }
 .mta-stagger { animation: mta-fade-in .3s ease both; }
 .mta-flash   { animation: mta-fade-in .3s ease; }
 
 /* ---------- Utilities ---------------------------------------------------- */
-.flex { display: flex; }
-.flex--between { justify-content: space-between; }
-.flex--center { align-items: center; }
-.flex--wrap { flex-wrap: wrap; }
-.flex--gap-8  { gap: var(--s8); }
-.flex--gap-16 { gap: var(--s16); }
-.mt-8  { margin-top: var(--s8); }
-.mt-16 { margin-top: var(--s16); }
-.mt-24 { margin-top: var(--s24); }
-.mt-32 { margin-top: var(--s32); }
-.mb-0  { margin-bottom: 0; }
-.mb-8  { margin-bottom: var(--s8); }
-.mb-16 { margin-bottom: var(--s16); }
-.mb-24 { margin-bottom: var(--s24); }
+.flex { display: flex; } .flex--between { justify-content: space-between; }
+.flex--center { align-items: center; } .flex--wrap { flex-wrap: wrap; }
+.flex--gap-8 { gap: var(--s8); } .flex--gap-16 { gap: var(--s16); }
+.mt-8 { margin-top: var(--s8); } .mt-16 { margin-top: var(--s16); }
+.mt-24 { margin-top: var(--s24); } .mt-32 { margin-top: var(--s32); }
+.mb-0 { margin-bottom: 0; } .mb-8 { margin-bottom: var(--s8); }
+.mb-16 { margin-bottom: var(--s16); } .mb-24 { margin-bottom: var(--s24); }
 .mb-32 { margin-bottom: var(--s32); }
 
 /* ---------- Responsive --------------------------------------------------- */
@@ -435,7 +451,7 @@ a:hover { text-decoration: underline; }
   .mta-nav__links {
     display: none; position: absolute; top: var(--nav-h); left: 0; right: 0;
     background: #000; flex-direction: column; padding: var(--s16);
-    border-bottom: 3px solid var(--mta-yellow);
+    border-bottom: 3px solid var(--mta-blue);
   }
   .mta-nav__links.is-open { display: flex; }
   .mta-nav__toggle { display: flex; align-items: center; justify-content: center; }
@@ -446,6 +462,7 @@ a:hover { text-decoration: underline; }
   .mta-grid-4 { grid-template-columns: repeat(2, 1fr); }
   .mta-metrics-grid { grid-template-columns: repeat(2, 1fr); }
   .mta-stats { grid-template-columns: repeat(2, 1fr); }
+  .mta-hero__arrows { display: none; }
 }
 @media (max-width: 480px) {
   .mta-stats { grid-template-columns: 1fr; }

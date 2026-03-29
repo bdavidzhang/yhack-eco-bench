@@ -15,7 +15,7 @@ const MTA = {
 const MODEL_LINES = {
   "Qwen3.5-0.8B": { bg: MTA.green, border: "#006B2B", circle: "green", letter: "1", label: "Line 1 (0.8B)" },
   "Qwen3.5-4B":   { bg: MTA.yellow, border: "#D4AB00", circle: "yellow", letter: "4", label: "Line 4 (4B)" },
-  "Qwen3.5-9B":   { bg: MTA.red, border: "#C42B25", circle: "red", letter: "9", label: "Line 9 (9B)" }
+  "Qwen3.5-9B":   { bg: MTA.blue, border: "#002d80", circle: "blue", letter: "9", label: "Line 9 (9B)" }
 };
 
 function getModelLine(modelName) {
@@ -192,8 +192,8 @@ function renderParetoChart() {
         }
       },
       scales: {
-        x: { title: { display: true, text: "Validation BPB (lower = better quality)", font: { weight: 600 } }, grid: { color: "rgba(0,0,0,.06)" } },
-        y: { title: { display: true, text: "SCI (µgCO₂/token) — lower = greener", font: { weight: 600 } }, grid: { color: "rgba(0,0,0,.06)" } }
+        x: { title: { display: true, text: "Validation BPB (lower = better)", font: { weight: 600 }, color: "#aaa" }, grid: { color: "rgba(255,255,255,.08)" }, ticks: { color: "#999" } },
+        y: { title: { display: true, text: "SCI (µgCO₂/tok) — lower = greener", font: { weight: 600 }, color: "#aaa" }, grid: { color: "rgba(255,255,255,.08)" }, ticks: { color: "#999" } }
       },
       onClick: (_, elements) => {
         if (elements.length > 0) {
