@@ -34,9 +34,21 @@
         <span class="mta-circle mta-circle--sm mta-circle--orange">C</span> Calculator</a></li>
       <li role="none"><a class="mta-nav__link" href="#" data-nav="methodology" role="menuitem">
         <span class="mta-circle mta-circle--sm mta-circle--purple">M</span> Methodology</a></li>
+      <li role="none">
+        <a class="mta-nav__link" id="nav-routing" href="./dist/globe.html" role="menuitem">
+          <span class="mta-circle mta-circle--sm mta-circle--red">R</span> Routing
+        </a>
+      </li>
     </ul>
   </div>
 </nav>
+<script>
+  // In dev (Vite serves globe.html directly), rewrite the href to the dev server
+  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    var routingLink = document.getElementById('nav-routing')
+    if (routingLink) routingLink.href = 'http://localhost:5173/globe.html'
+  }
+</script>
 
 <main id="main-content">
 
