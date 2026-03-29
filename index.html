@@ -266,8 +266,33 @@
           </div>
         </div>
         <div class="mta-chart-card">
-          <h3 class="t-h4 mb-16">SCI by Region</h3>
-          <div class="mta-chart-canvas mta-chart-canvas--tall"><canvas id="region-chart" role="img" aria-label="SCI comparison by region"></canvas></div>
+          <!-- Card header: title + tab switcher -->
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+            <h3 class="t-h4">SCI by Region</h3>
+            <div class="mta-tabs" id="region-view-tabs" style="border-bottom:none;margin-bottom:0" role="tablist" aria-label="Region visualization">
+              <button class="mta-tab is-selected" data-view="chart" role="tab" aria-selected="true" id="region-tab-chart">
+                <span class="mta-circle mta-circle--sm mta-circle--green">B</span> Bar Chart
+              </button>
+              <button class="mta-tab" data-view="globe" role="tab" aria-selected="false" id="region-tab-globe">
+                <span class="mta-circle mta-circle--sm mta-circle--blue">G</span> 3D Globe
+              </button>
+            </div>
+          </div>
+          <!-- Panel 1: Bar chart -->
+          <div id="region-view-chart" class="mta-chart-canvas mta-chart-canvas--tall" role="tabpanel" aria-labelledby="region-tab-chart">
+            <canvas id="region-chart" role="img" aria-label="SCI comparison by region"></canvas>
+          </div>
+          <!-- Panel 2: Interactive globe -->
+          <div id="region-view-globe" class="mta-chart-canvas mta-chart-canvas--tall" role="tabpanel" aria-labelledby="region-tab-globe"
+               style="display:none;padding:0;overflow:hidden;border-radius:4px">
+            <iframe
+              id="calculator-globe-iframe"
+              src="./calculator-globe.html"
+              style="width:100%;height:100%;border:none;display:block;background:#0A0A0A"
+              allow="accelerometer"
+              title="SCI by Region — interactive 3D globe"
+            ></iframe>
+          </div>
         </div>
       </div>
     </div>
@@ -403,5 +428,16 @@
 <script src="data.js"></script>
 <script src="sensor_timeseries.js"></script>
 <script src="app.js"></script>
+<script>
+  // Relay region selections from the calculator globe iframe back to the dropdown
+  window.addEventListener('message', function(e) {
+    if (!e.data || e.data.type !== 'REGION_SELECTED') return;
+    var sel = document.getElementById('calc-region');
+    if (sel && e.data.region) {
+      sel.value = e.data.region;
+      sel.dispatchEvent(new Event('change'));
+    }
+  });
+</script>
 </body>
 </html>

@@ -464,6 +464,25 @@ function initCalculator() {
   });
   expSel.addEventListener("change", updateCalculator);
   regSel.addEventListener("change", updateCalculator);
+  // Re-send data once the globe iframe finishes loading
+  const globeIframe = document.getElementById("calculator-globe-iframe");
+  if (globeIframe) globeIframe.addEventListener("load", updateCalculator);
+
+  // Tab switching: Bar Chart ↔ 3D Globe
+  document.querySelectorAll("#region-view-tabs .mta-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      document.querySelectorAll("#region-view-tabs .mta-tab").forEach(b => {
+        b.classList.toggle("is-selected", b === btn);
+        b.setAttribute("aria-selected", b === btn ? "true" : "false");
+      });
+      document.getElementById("region-view-chart").style.display = view === "chart" ? "" : "none";
+      document.getElementById("region-view-globe").style.display = view === "globe" ? "" : "none";
+      // Push latest data to globe when switching to it
+      if (view === "globe") updateCalculator();
+    });
+  });
+
   updateCalculator();
 }
 
@@ -485,20 +504,36 @@ function updateCalculator() {
     region: r, sci: (m.energy_kwh_per_token * CARBON_PRESETS[r] + emb) * 1e6, selected: r === region
   })).sort((a, b) => a.sci - b.sci);
 
-  if (regionChart) regionChart.destroy();
-  regionChart = new Chart(document.getElementById("region-chart").getContext("2d"), {
-    type: "bar",
-    data: {
-      labels: pairs.map(p => p.region.split(" (")[0]),
-      datasets: [{ label: "SCI (µg)", data: pairs.map(p => p.sci),
-        backgroundColor: pairs.map(p => p.selected ? MTA.green : "#2A2A2A"), borderRadius: 4, barPercentage: .7 }]
-    },
-    options: {
-      indexAxis: "y", responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.x.toFixed(2) + " µgCO₂/tok" } } },
-      scales: { x: { title: { display: true, text: "SCI (µgCO₂/token)" }, grid: { color: "rgba(255,255,255,0.05)" } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
-    }
-  });
+  // Push SCI data to the globe iframe
+  const globeIframe = document.getElementById("calculator-globe-iframe");
+  if (globeIframe && globeIframe.contentWindow) {
+    globeIframe.contentWindow.postMessage({
+      type: 'SET_SCI_DATA',
+      data: pairs.map(p => ({ name: p.region, sci: p.sci }))
+    }, '*');
+    globeIframe.contentWindow.postMessage({
+      type: 'SET_SELECTED_REGION',
+      region: region
+    }, '*');
+  }
+
+  const regionChartCanvas = document.getElementById("region-chart");
+  if (regionChartCanvas) {
+    if (regionChart) regionChart.destroy();
+    regionChart = new Chart(regionChartCanvas.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: pairs.map(p => p.region.split(" (")[0]),
+        datasets: [{ label: "SCI (µg)", data: pairs.map(p => p.sci),
+          backgroundColor: pairs.map(p => p.selected ? MTA.green : "#2A2A2A"), borderRadius: 4, barPercentage: .7 }]
+      },
+      options: {
+        indexAxis: "y", responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.x.toFixed(2) + " µgCO₂/tok" } } },
+        scales: { x: { title: { display: true, text: "SCI (µgCO₂/token)" }, grid: { color: "rgba(255,255,255,0.05)" } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
+      }
+    });
+  }
 }
 
 

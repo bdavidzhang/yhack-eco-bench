@@ -10,7 +10,8 @@ export default defineConfig({
     emptyOutDir: false,      // do not wipe dist/ on each build
     rollupOptions: {
       input: {
-        globe: 'globe.html', // output is dist/globe.html, not dist/index.html
+        globe: 'globe.html',
+        'calculator-globe': 'calculator-globe.html',
       },
     },
   },
