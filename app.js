@@ -529,6 +529,8 @@ function updateCalculator() {
       },
       options: {
         indexAxis: "y", responsive: true, maintainAspectRatio: false,
+        animation: { duration: 700, easing: "easeOutCubic" },
+        animations: { x: { from: 0 }, y: { duration: 0 } },
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.x.toFixed(2) + " µgCO₂/tok" } } },
         scales: { x: { title: { display: true, text: "SCI (µgCO₂/token)" }, grid: { color: "rgba(255,255,255,0.05)" } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
       }
