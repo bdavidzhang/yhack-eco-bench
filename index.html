@@ -7,8 +7,8 @@
   <meta name="description" content="How much CO2 does your LLM inference cost? Measured on NVIDIA DGX Spark using the ISO SCI standard." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" media="print" onload="this.media='all'" />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" /></noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" /></noscript>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/plotly.js-gl3d-dist-min@2.35.3/plotly-gl3d.min.js" defer></script>
@@ -21,19 +21,15 @@
 <nav class="mta-nav" aria-label="Main navigation">
   <div class="mta-nav__inner">
     <a href="#" class="mta-nav__brand" data-nav="dashboard">
-      <span class="mta-circle mta-circle--sm mta-circle--green">G</span>
+      <span class="mta-nav__brand-dot" aria-hidden="true"></span>
       Green LLM Bench
     </a>
     <button class="mta-nav__toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links" id="nav-toggle">&#9776;</button>
     <ul class="mta-nav__links" id="nav-links" role="menubar">
-      <li role="none"><a class="mta-nav__link is-active" href="#" data-nav="dashboard" role="menuitem" aria-current="page">
-        <span class="mta-circle mta-circle--sm mta-circle--lime">D</span> Dashboard</a></li>
-      <li role="none"><a class="mta-nav__link" href="#" data-nav="leaderboards" role="menuitem">
-        <span class="mta-circle mta-circle--sm mta-circle--blue">L</span> Leaderboards</a></li>
-      <li role="none"><a class="mta-nav__link" href="#" data-nav="calculator" role="menuitem">
-        <span class="mta-circle mta-circle--sm mta-circle--orange">C</span> Calculator</a></li>
-      <li role="none"><a class="mta-nav__link" href="#" data-nav="methodology" role="menuitem">
-        <span class="mta-circle mta-circle--sm mta-circle--purple">M</span> Methodology</a></li>
+      <li role="none"><a class="mta-nav__link is-active" href="#" data-nav="dashboard" role="menuitem" aria-current="page">Dashboard</a></li>
+      <li role="none"><a class="mta-nav__link" href="#" data-nav="leaderboards" role="menuitem">Leaderboards</a></li>
+      <li role="none"><a class="mta-nav__link" href="#" data-nav="calculator" role="menuitem">Calculator</a></li>
+      <li role="none"><a class="mta-nav__link" href="#" data-nav="methodology" role="menuitem">Methodology</a></li>
     </ul>
   </div>
 </nav>
@@ -48,10 +44,10 @@
         <div>
           <p class="mta-hero__eyebrow">YHack 2026</p>
           <h1 class="mta-hero__title">
-            How much<br>
-            <span class="mta-hero__accent">CO<sub>2</sub></span><br>
-            does your LLM<br>
-            inference cost?
+            <span class="hero-line">How much</span>
+            <span class="hero-line mta-hero__accent">CO<sub>2</sub></span>
+            <span class="hero-line">does your LLM</span>
+            <span class="hero-line">inference cost?</span>
           </h1>
           <div class="mta-hero__circles">
             <span class="mta-circle mta-circle--lg mta-circle--green" title="Qwen 0.8B">1</span>
@@ -90,7 +86,7 @@
       </div>
 
       <!-- Stats -->
-      <div class="mta-stats" id="stats-bar" aria-label="Key statistics"></div>
+      <div class="mta-stats reveal-group" id="stats-bar" aria-label="Key statistics"></div>
     </div>
     <div class="mta-hero__bleed" aria-hidden="true">BENCH</div>
   </section>
@@ -98,19 +94,19 @@
   <!-- Per-Model Analysis -->
   <section class="mta-section" aria-labelledby="permodel-heading">
     <div class="mta-container">
-      <div class="mb-24">
+      <div class="mb-24 reveal-heading">
         <h2 class="t-h2" id="permodel-heading">Per-Model Analysis: Throughput vs Carbon</h2>
         <p class="t-small t-muted mt-8">Each chart shows one model family. X&nbsp;=&nbsp;tok/s, Y&nbsp;=&nbsp;SCI. Point size reflects batch size. Log-log scale.</p>
       </div>
-      <div class="mta-permodel-grid" id="permodel-grid"></div>
-      <div class="mta-permodel-legend" id="permodel-legend"></div>
+      <div class="mta-permodel-grid reveal-group" id="permodel-grid"></div>
+      <div class="mta-permodel-legend reveal" id="permodel-legend"></div>
     </div>
   </section>
 
   <!-- SCI Scaling Law: Measured + Predicted -->
   <section class="mta-section" aria-labelledby="scaling-heading">
     <div class="mta-container">
-      <div class="mb-24">
+      <div class="mb-24 reveal-heading">
         <h2 class="t-h2" id="scaling-heading">SCI Scaling Law: Predicting Frontier Model Carbon</h2>
         <p class="t-small t-muted mt-8">
           Power-law regression fit on measured Qwen data, extrapolated to frontier models.
@@ -132,19 +128,16 @@
   <!-- 3D Interactive Visualizations -->
   <section class="mta-section" aria-labelledby="viz3d-heading">
     <div class="mta-container">
-      <div class="mb-24">
+      <div class="mb-24 reveal-heading">
         <h2 class="t-h2" id="viz3d-heading">3D Interactive Analysis</h2>
         <p class="t-small t-muted mt-8">Drag to rotate, scroll to zoom, hover for details. Three dimensions reveal tradeoffs invisible in 2D.</p>
       </div>
 
       <!-- Tab selector for 3D charts -->
       <div class="mta-tabs mb-24" id="viz3d-tabs" role="tablist" aria-label="3D visualization selector">
-        <button class="mta-tab is-selected" data-viz3d="pareto3d" role="tab" aria-selected="true" id="tab-pareto3d">
-          <span class="mta-circle mta-circle--sm mta-circle--green">P</span> Speed / Latency / Carbon</button>
-        <button class="mta-tab" data-viz3d="scaling3d" role="tab" aria-selected="false" id="tab-scaling3d">
-          <span class="mta-circle mta-circle--sm mta-circle--orange">S</span> Scaling Law</button>
-        <button class="mta-tab" data-viz3d="sensor3d" role="tab" aria-selected="false" id="tab-sensor3d">
-          <span class="mta-circle mta-circle--sm mta-circle--blue">T</span> Sensor Timeline</button>
+        <button class="mta-tab is-selected" data-viz3d="pareto3d" role="tab" aria-selected="true" id="tab-pareto3d">Speed / Latency / Carbon</button>
+        <button class="mta-tab" data-viz3d="scaling3d" role="tab" aria-selected="false" id="tab-scaling3d">Scaling Law</button>
+        <button class="mta-tab" data-viz3d="sensor3d" role="tab" aria-selected="false" id="tab-sensor3d">Sensor Timeline</button>
       </div>
 
       <!-- 3D Chart containers -->
@@ -163,7 +156,7 @@
   <!-- Top 5 Preview -->
   <section class="mta-section--sm" aria-labelledby="preview-heading">
     <div class="mta-container">
-      <div class="flex flex--between flex--center mb-24">
+      <div class="flex flex--between flex--center mb-24 reveal-heading">
         <h2 class="t-h2" id="preview-heading">Top 5 Greenest Configs</h2>
         <button class="mta-btn mta-btn--secondary mta-btn--sm" data-nav="leaderboards">View All →</button>
       </div>
@@ -194,12 +187,12 @@
     <div class="mta-container">
       <h1 class="t-h1 mb-24">Leaderboards</h1>
       <div class="mta-tabs" id="leaderboard-tabs" role="tablist" aria-label="Leaderboard categories">
-        <button class="mta-tab is-selected" data-board="greenest" role="tab" aria-selected="true" id="tab-greenest"><span class="mta-circle mta-circle--sm mta-circle--green">G</span> Greenest</button>
-        <button class="mta-tab" data-board="efficient" role="tab" aria-selected="false" id="tab-efficient"><span class="mta-circle mta-circle--sm mta-circle--lime">E</span> Efficient</button>
-        <button class="mta-tab" data-board="perfwatt" role="tab" aria-selected="false" id="tab-perfwatt"><span class="mta-circle mta-circle--sm mta-circle--blue">P</span> Perf/Watt</button>
-        <button class="mta-tab" data-board="quality" role="tab" aria-selected="false" id="tab-quality"><span class="mta-circle mta-circle--sm mta-circle--purple">Q</span> Quality</button>
-        <button class="mta-tab" data-board="fastest" role="tab" aria-selected="false" id="tab-fastest"><span class="mta-circle mta-circle--sm mta-circle--red">F</span> Fastest</button>
-        <button class="mta-tab" data-board="cheapest" role="tab" aria-selected="false" id="tab-cheapest"><span class="mta-circle mta-circle--sm mta-circle--yellow">C</span> Cheapest</button>
+        <button class="mta-tab is-selected" data-board="greenest" role="tab" aria-selected="true" id="tab-greenest">Greenest</button>
+        <button class="mta-tab" data-board="efficient" role="tab" aria-selected="false" id="tab-efficient">Efficient</button>
+        <button class="mta-tab" data-board="perfwatt" role="tab" aria-selected="false" id="tab-perfwatt">Perf/Watt</button>
+        <button class="mta-tab" data-board="quality" role="tab" aria-selected="false" id="tab-quality">Quality</button>
+        <button class="mta-tab" data-board="fastest" role="tab" aria-selected="false" id="tab-fastest">Fastest</button>
+        <button class="mta-tab" data-board="cheapest" role="tab" aria-selected="false" id="tab-cheapest">Cheapest</button>
       </div>
       <div class="mta-filters mt-24">
         <label for="filter-model">Model:</label>

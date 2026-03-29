@@ -1027,7 +1027,129 @@ function init() {
   // 3D charts (lazy-loaded via Plotly)
   if (typeof Plotly !== "undefined") init3DTabs();
   else window.addEventListener("load", () => { if (typeof Plotly !== "undefined") init3DTabs(); });
+  // Kick off scroll animation system after content renders
+  initNavScroll();
+  initScrollAnimations();
 }
 
 if (typeof Chart !== "undefined") document.addEventListener("DOMContentLoaded", init);
 else window.addEventListener("load", init);
+
+// ─── Scroll Reveal & Animation System ───────────────────────────────────────────
+
+// Intersection Observer for scroll-triggered reveals
+function initScrollAnimations() {
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: "0px 0px -48px 0px"
+  };
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      el.classList.add("is-visible");
+      revealObserver.unobserve(el);
+    });
+  }, observerOptions);
+
+  // Observe all .reveal and .reveal-heading elements
+  document.querySelectorAll(".reveal, .reveal-heading").forEach(el => {
+    revealObserver.observe(el);
+  });
+
+  // Also observe reveal-group containers — add reveal to each child
+  document.querySelectorAll(".reveal-group").forEach(group => {
+    group.querySelectorAll(":scope > *").forEach(child => {
+      if (!child.classList.contains("reveal")) {
+        child.classList.add("reveal");
+      }
+    });
+    revealObserver.observe(group);
+  });
+
+  // Re-observe reveal-group parent to trigger children
+  const groupObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.querySelectorAll(".reveal").forEach(child => child.classList.add("is-visible"));
+      groupObserver.unobserve(entry.target);
+    });
+  }, observerOptions);
+
+  document.querySelectorAll(".reveal-group").forEach(g => groupObserver.observe(g));
+}
+
+// Nav: Add scrolled class for shadow
+function initNavScroll() {
+  const nav = document.querySelector(".mta-nav");
+  if (!nav) return;
+  const onScroll = () => nav.classList.toggle("is-scrolled", window.scrollY > 8);
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+}
+
+// Stats: trigger count-up when entering viewport
+function initStatsCountUp() {
+  const statsBar = document.getElementById("stats-bar");
+  if (!statsBar) return;
+
+  const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.querySelectorAll(".mta-stat__value[data-target]").forEach(el => {
+        const t = parseFloat(el.dataset.target);
+        if (!isNaN(t) && t > 0) animateCountUp(el, t, 900);
+      });
+      statsObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.3 });
+
+  statsObserver.observe(statsBar);
+}
+
+// Page transitions: slight fade when switching pages
+const _origNavigate = navigate;
+function navigateAnimated(page) {
+  const current = Object.values(pages).find(p => p.classList.contains("is-active"));
+  if (current) {
+    current.style.transition = "opacity .18s ease";
+    current.style.opacity = "0";
+    setTimeout(() => {
+      current.style.transition = "";
+      current.style.opacity = "";
+      _origNavigate(page);
+      // Re-run reveal for newly visible page
+      setTimeout(initScrollAnimations, 50);
+    }, 160);
+  } else {
+    _origNavigate(page);
+    setTimeout(initScrollAnimations, 50);
+  }
+}
+
+// Re-wire nav clicks to use animated navigation
+document.querySelectorAll("[data-nav]").forEach(el => {
+  const handlers = el._navigateHandler;
+  if (handlers) return; // skip if already patched
+});
+
+// Hook navigate globally (replaces calls from data-nav listeners)
+// We patch by overriding the function reference used by navigate
+// Since navigate() is called by event listeners set up earlier, we wrap at window level:
+(function patchNavigation() {
+  // Find all nav links and re-bind with animated version
+  document.querySelectorAll("[data-nav]").forEach(el => {
+    // Clone removes old listeners, then add new animated one
+    const clone = el.cloneNode(true);
+    el.parentNode.replaceChild(clone, el);
+    clone.addEventListener("click", e => {
+      e.preventDefault();
+      navigateAnimated(clone.dataset.nav);
+      document.getElementById("nav-links").classList.remove("is-open");
+      document.getElementById("nav-toggle").setAttribute("aria-expanded", "false");
+    });
+  });
+})();
+
+// initScrollAnimations() and initNavScroll() are called inside init()
