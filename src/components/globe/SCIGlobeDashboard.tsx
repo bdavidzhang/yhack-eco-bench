@@ -1,7 +1,92 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { GlobeScene, GlobeSceneHandle } from './GlobeScene'
 import { useGlobeStore } from './useGlobeStore'
 import { sciToColor, REGIONS, classifyTask, TaskType } from './sciUtils'
+
+// ── CO₂ bubble animation ──────────────────────────────────────────────────────
+
+const CO2_BUBBLE_STYLE = `
+@keyframes co2BubbleRise {
+  0%   { transform: translateY(0)   scale(1);   opacity: 0.9; }
+  60%  { transform: translateY(-80px) scale(1.05); opacity: 0.85; }
+  100% { transform: translateY(-160px) scale(0.8); opacity: 0; }
+}
+@keyframes co2BubbleWobble {
+  0%   { margin-left: 0px; }
+  25%  { margin-left: 6px; }
+  50%  { margin-left: -5px; }
+  75%  { margin-left: 4px; }
+  100% { margin-left: 0px; }
+}
+`
+
+interface Bubble {
+  id: number
+  x: number
+  size: number
+  delay: number
+  duration: number
+}
+
+let bubbleCounter = 0
+
+function CO2BubblesOverlay({ active, onDone }: { active: boolean; onDone: () => void }) {
+  const [bubbles, setBubbles] = useState<Bubble[]>([])
+
+  useEffect(() => {
+    if (!active) return
+    const spawned: Bubble[] = Array.from({ length: 8 }, (_, i) => ({
+      id: bubbleCounter++,
+      x: 10 + Math.random() * 80,     // % across container
+      size: 32 + Math.random() * 24,   // px
+      delay: i * 120,                  // ms stagger
+      duration: 1600 + Math.random() * 600,
+    }))
+    setBubbles(spawned)
+    const longest = Math.max(...spawned.map(b => b.delay + b.duration))
+    const t = setTimeout(() => { setBubbles([]); onDone() }, longest + 100)
+    return () => clearTimeout(t)
+  }, [active])
+
+  if (!bubbles.length) return null
+
+  return (
+    <div style={{
+      position: 'absolute',
+      inset: 0,
+      pointerEvents: 'none',
+      overflow: 'visible',
+      zIndex: 50,
+    }}>
+      {bubbles.map(b => (
+        <div
+          key={b.id}
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: `${b.x}%`,
+            width: b.size,
+            height: b.size,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.3), rgba(100,210,100,0.18))',
+            border: '1.5px solid rgba(93,184,0,0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: Math.max(9, b.size * 0.28),
+            fontWeight: 700,
+            color: '#5DB800',
+            letterSpacing: '-0.02em',
+            backdropFilter: 'blur(2px)',
+            animation: `co2BubbleRise ${b.duration}ms ease-out ${b.delay}ms forwards, co2BubbleWobble ${b.duration * 0.6}ms ease-in-out ${b.delay}ms infinite`,
+          }}
+        >
+          CO₂
+        </div>
+      ))}
+    </div>
+  )
+}
 
 // ── WebGL error boundary ──────────────────────────────────────────────────────
 
@@ -67,16 +152,22 @@ interface MetricCardProps {
   label: string
   value: React.ReactNode
   sub: string
+  onClick?: () => void
 }
 
-function MetricCard({ label, value, sub }: MetricCardProps) {
+function MetricCard({ label, value, sub, onClick }: MetricCardProps) {
   return (
-    <div style={{
-      background: 'var(--color-background-secondary)',
-      border: '0.5px solid var(--color-border-tertiary)',
-      borderRadius: 'var(--border-radius-md)',
-      padding: '12px 14px',
-    }}>
+    <div
+      onClick={onClick}
+      style={{
+        background: 'var(--color-background-secondary)',
+        border: '0.5px solid var(--color-border-tertiary)',
+        borderRadius: 'var(--border-radius-md)',
+        padding: '12px 14px',
+        cursor: onClick ? 'pointer' : undefined,
+        userSelect: 'none',
+      }}
+    >
       <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.2 }}>{value}</div>
       <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}>{sub}</div>
@@ -394,6 +485,18 @@ function RegionListCard({ onRegionClick }: RegionListCardProps) {
 export function SCIGlobeDashboard() {
   const sceneRef = useRef<GlobeSceneHandle>(null)
   const { activeRegion, activeModels, savedVsWorst } = useGlobeStore()
+  const [co2BubblesActive, setCo2BubblesActive] = useState(false)
+
+  // Inject keyframe CSS once
+  useEffect(() => {
+    const id = 'co2-bubble-keyframes'
+    if (!document.getElementById(id)) {
+      const style = document.createElement('style')
+      style.id = id
+      style.textContent = CO2_BUBBLE_STYLE
+      document.head.appendChild(style)
+    }
+  }, [])
 
   const region = activeRegion()
   const models = activeModels()
@@ -403,6 +506,10 @@ export function SCIGlobeDashboard() {
   const flyToActive = () => {
     sceneRef.current?.flyTo(useGlobeStore.getState().activeRegionId)
   }
+
+  const handleCo2Click = useCallback(() => {
+    setCo2BubblesActive(true)
+  }, [])
 
   return (
     <div style={{ padding: '1rem 0', fontFamily: 'var(--font)' }}>
@@ -424,6 +531,7 @@ export function SCIGlobeDashboard() {
         gap: 10,
         marginBottom: 16,
         padding: '0 1rem',
+        position: 'relative',
       }}>
         <MetricCard
           label="Active region"
@@ -440,11 +548,18 @@ export function SCIGlobeDashboard() {
           value={models[0].name}
           sub={models[0].note}
         />
-        <MetricCard
-          label="CO₂ saved vs worst"
-          value={<span style={{ color: savedColor }}>{saved}%</span>}
-          sub="vs highest SCI region"
-        />
+        <div style={{ position: 'relative' }}>
+          <MetricCard
+            label="CO₂ saved vs worst"
+            value={<span style={{ color: savedColor }}>{saved}%</span>}
+            sub="vs highest SCI region"
+            onClick={handleCo2Click}
+          />
+          <CO2BubblesOverlay
+            active={co2BubblesActive}
+            onDone={() => setCo2BubblesActive(false)}
+          />
+        </div>
       </div>
 
       {/* Main panel: globe + sidebar */}
