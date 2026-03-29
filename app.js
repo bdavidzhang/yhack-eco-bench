@@ -1086,6 +1086,9 @@ function init() {
   // 3D charts (lazy-loaded via Plotly)
   if (typeof Plotly !== "undefined") init3DTabs();
   else window.addEventListener("load", () => { if (typeof Plotly !== "undefined") init3DTabs(); });
+  // Navigate to hash on initial load (e.g. coming from globe.html via /index.html#leaderboards)
+  const hashPage = location.hash.slice(1);
+  if (hashPage && pages[hashPage]) navigate(hashPage);
 }
 
 if (typeof Chart !== "undefined") document.addEventListener("DOMContentLoaded", init);
