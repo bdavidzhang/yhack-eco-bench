@@ -72,7 +72,7 @@ const INTENT_PATTERNS: { pattern: RegExp; task: TaskType; bonus: number }[] = [
   // "analyze/evaluate/compare X" → reason
   { pattern: /\b(analyze|analyse|evaluate|compare|assess)\s+(this|the|my|a|an|these|whether)/i, task: 'reason', bonus: 3 },
   // "find/search for/look up sources/references/studies/information on" → reason
-  { pattern: /\b(find|search\s+for|look\s+up|locate|gather)\s+(sources?|references?|studies|papers?|evidence|information|data|articles?|research)\b/i, task: 'reason', bonus: 4 },
+  { pattern: /\b(find|search\s+for|look\s+up|locate|gather)\s+(sources?|references?|resources?|studies|papers?|evidence|information|data|articles?|research)\b/i, task: 'reason', bonus: 4 },
 ]
 
 // Weighted keywords — high-signal (domain-specific) terms score much higher
@@ -85,12 +85,21 @@ const TASK_KEYWORDS: Record<TaskType, { term: string; weight: number }[]> = {
     { term: 'refactor',   weight: 3 }, { term: 'unit test',  weight: 3 },
     { term: 'compile',    weight: 3 }, { term: 'algorithm',  weight: 2.5 },
     { term: 'function',   weight: 2.5 },{ term: 'class',     weight: 2.5 },
+    { term: 'array',      weight: 2.5 },{ term: 'regex',     weight: 2.5 },
+    { term: 'html',       weight: 3 }, { term: 'css',        weight: 3 },
+    { term: 'bash',       weight: 2.5 },{ term: 'shell',     weight: 2.5 },
     { term: 'api',        weight: 2 }, { term: 'method',     weight: 2 },
     { term: 'implement',  weight: 2 }, { term: 'code',       weight: 2 },
     { term: 'syntax',     weight: 2 }, { term: 'library',    weight: 1.5 },
+    { term: 'variable',   weight: 2 }, { term: 'loop',       weight: 2 },
+    { term: 'database',   weight: 2 }, { term: 'sql',        weight: 2 },
+    { term: 'bug',        weight: 2 }, { term: 'error',      weight: 2 },
+    { term: 'endpoint',   weight: 2 }, { term: 'frontend',   weight: 1.5 },
+    { term: 'backend',    weight: 1.5 },
     // medium-signal
     { term: 'script',     weight: 1.5 },{ term: 'program',   weight: 1.5 },
     { term: 'develop',    weight: 1 }, { term: 'test',       weight: 0.8 },
+    { term: 'deploy',     weight: 1 },
     // low-signal: ambiguous — penalised heavily
     { term: 'build',      weight: 0.5 },{ term: 'generate',  weight: 0.3 },
     { term: 'write',      weight: 0.3 },
@@ -109,8 +118,15 @@ const TASK_KEYWORDS: Record<TaskType, { term: string; weight: number }[]> = {
     { term: 'assess',     weight: 1.5 },{ term: 'predict',   weight: 1.5 },
     { term: 'think',      weight: 1 }, { term: 'plan',       weight: 0.8 },
     { term: 'sources',    weight: 2 }, { term: 'references', weight: 2 },
+    { term: 'resources',  weight: 2 },
     { term: 'evidence',   weight: 1.5 },{ term: 'literature', weight: 2 },
     { term: 'studies',    weight: 1.5 },{ term: 'papers',    weight: 1.5 },
+    { term: 'prove',      weight: 2.5 },{ term: 'proof',     weight: 2.5 },
+    { term: 'implications', weight: 2 },{ term: 'tradeoffs', weight: 2 },
+    { term: 'pros and cons', weight: 2 },{ term: 'argue',    weight: 2 },
+    { term: 'argument',   weight: 2 }, { term: 'interpret',  weight: 1.5 },
+    { term: 'diagnose',   weight: 2 }, { term: 'determine',  weight: 1.5 },
+    { term: 'cause',      weight: 1.5 },{ term: 'effect',    weight: 1.5 },
     // low-signal
     { term: 'problem',    weight: 0.5 },{ term: 'question',  weight: 0.3 },
     { term: 'why',        weight: 0.3 },{ term: 'how',       weight: 0.3 },
@@ -124,6 +140,10 @@ const TASK_KEYWORDS: Record<TaskType, { term: string; weight: number }[]> = {
     { term: 'summary',    weight: 2.5 },{ term: 'shorten',   weight: 2 },
     { term: 'compress',   weight: 2 }, { term: 'digest',     weight: 2 },
     // medium-signal
+    { term: 'gist',       weight: 3 }, { term: 'synopsis',   weight: 2.5 },
+    { term: 'takeaways',  weight: 2.5 },{ term: 'key takeaways', weight: 2.5 },
+    { term: 'main points', weight: 2.5 },{ term: 'abstract',  weight: 2 },
+    { term: 'bullet points', weight: 2 },{ term: 'rephrase',  weight: 2 },
     { term: 'brief',      weight: 1.5 },{ term: 'overview',  weight: 1.5 },
     { term: 'outline',    weight: 1.5 },{ term: 'highlight',  weight: 1.5 },
     { term: 'shorter',    weight: 1.5 },{ term: 'extract',   weight: 1 },
