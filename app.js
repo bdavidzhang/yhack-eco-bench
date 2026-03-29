@@ -449,6 +449,85 @@ document.getElementById("detail-modal").addEventListener("click", e => { if (e.t
 
 // ─── Calculator ─────────────────────────────────────────────────────────────────
 let regionChart = null;
+let calcChartSelectedRegions = []; // [] | [r1] | [r1, r2]
+
+function renderCalcSciBox(exp, dropdownRegion) {
+  const wellEl = document.getElementById("calc-sci-well");
+  if (!wellEl) return;
+  const m = exp.metrics;
+  const emb = m.carbon_embodied_g;
+
+  if (calcChartSelectedRegions.length === 0) {
+    const intensity = CARBON_PRESETS[dropdownRegion] || 210;
+    const op = m.energy_kwh_per_token * intensity;
+    const sci = op + emb;
+    wellEl.innerHTML = `
+      <h3 class="t-h4 mb-8">Recalculated SCI</h3>
+      <div style="font-size:28px;font-weight:700" id="calc-sci-result">${(sci * 1e6).toFixed(2)} µg</div>
+      <span class="t-small t-muted">gCO₂ per token</span>
+      <div class="mt-16 flex flex--gap-16">
+        <div><div class="t-xs t-muted">Operational</div><div class="t-bold" id="calc-operational">${(op * 1e6).toFixed(2)} µg</div></div>
+        <div><div class="t-xs t-muted">Embodied</div><div class="t-bold" id="calc-embodied">${(emb * 1e6).toFixed(2)} µg</div></div>
+      </div>`;
+    const sciEl = document.getElementById("calc-sci-result");
+    if (sciEl) flashElement(sciEl);
+
+  } else if (calcChartSelectedRegions.length === 1) {
+    const r = calcChartSelectedRegions[0];
+    const intensity = CARBON_PRESETS[r] || 210;
+    const op = m.energy_kwh_per_token * intensity;
+    const sci = op + emb;
+    wellEl.innerHTML = `
+      <h3 class="t-h4 mb-8">Recalculated SCI</h3>
+      <div style="font-size:11px;font-weight:700;color:${MTA.green};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">${r}</div>
+      <div style="font-size:28px;font-weight:700" id="calc-sci-result">${(sci * 1e6).toFixed(2)} µg</div>
+      <span class="t-small t-muted">gCO₂ per token</span>
+      <div class="mt-16 flex flex--gap-16">
+        <div><div class="t-xs t-muted">Operational</div><div class="t-bold" id="calc-operational">${(op * 1e6).toFixed(2)} µg</div></div>
+        <div><div class="t-xs t-muted">Embodied</div><div class="t-bold" id="calc-embodied">${(emb * 1e6).toFixed(2)} µg</div></div>
+      </div>`;
+    const sciEl = document.getElementById("calc-sci-result");
+    if (sciEl) flashElement(sciEl);
+
+  } else {
+    const [r1, r2] = calcChartSelectedRegions;
+    const int1 = CARBON_PRESETS[r1] || 210;
+    const int2 = CARBON_PRESETS[r2] || 210;
+    const op1 = m.energy_kwh_per_token * int1;
+    const op2 = m.energy_kwh_per_token * int2;
+    const sci1 = op1 + emb;
+    const sci2 = op2 + emb;
+    const diffPct = (sci2 - sci1) / sci1 * 100;
+    const arrowColor = diffPct > 0 ? MTA.red : MTA.green;
+    wellEl.innerHTML = `
+      <h3 class="t-h4 mb-12">Region Comparison</h3>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:${MTA.green};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${r1}</div>
+          <div style="font-size:22px;font-weight:700">${(sci1 * 1e6).toFixed(2)} µg</div>
+          <div class="t-xs t-muted">CO₂/tok</div>
+          <div style="margin-top:8px">
+            <div class="t-xs"><span class="t-muted">Op: </span>${(op1 * 1e6).toFixed(2)} µg</div>
+            <div class="t-xs"><span class="t-muted">Emb: </span>${(emb * 1e6).toFixed(2)} µg</div>
+          </div>
+        </div>
+        <div style="text-align:center;padding-top:12px">
+          <div style="font-size:16px;color:${arrowColor};font-weight:700">${diffPct > 0 ? '▲' : '▼'}</div>
+          <div style="font-size:11px;font-weight:700;color:${arrowColor}">${Math.abs(diffPct).toFixed(1)}%</div>
+          <div class="t-xs t-muted" style="margin-top:2px">vs</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:${MTA.green};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${r2}</div>
+          <div style="font-size:22px;font-weight:700">${(sci2 * 1e6).toFixed(2)} µg</div>
+          <div class="t-xs t-muted">CO₂/tok</div>
+          <div style="margin-top:8px">
+            <div class="t-xs"><span class="t-muted">Op: </span>${(op2 * 1e6).toFixed(2)} µg</div>
+            <div class="t-xs"><span class="t-muted">Emb: </span>${(emb * 1e6).toFixed(2)} µg</div>
+          </div>
+        </div>
+      </div>`;
+  }
+}
 
 function initCalculator() {
   const expSel = document.getElementById("calc-experiment");
@@ -462,8 +541,8 @@ function initCalculator() {
     const o = document.createElement("option"); o.value = r;
     o.textContent = `${r} (${CARBON_PRESETS[r]} gCO₂/kWh)`; regSel.appendChild(o);
   });
-  expSel.addEventListener("change", updateCalculator);
-  regSel.addEventListener("change", updateCalculator);
+  expSel.addEventListener("change", () => { calcChartSelectedRegions = []; updateCalculator(); });
+  regSel.addEventListener("change", () => { calcChartSelectedRegions = []; updateCalculator(); });
 
   // Tab switching: Bar Chart ↔ 3D Globe
   document.querySelectorAll("#region-view-tabs .mta-tab").forEach(btn => {
@@ -498,15 +577,13 @@ function updateCalculator() {
   const intensity = CARBON_PRESETS[region] || 210;
   document.getElementById("calc-intensity-value").textContent = intensity;
   const m = exp.metrics;
-  const op = m.energy_kwh_per_token * intensity, emb = m.carbon_embodied_g, sci = op + emb;
-  const sciEl = document.getElementById("calc-sci-result");
-  sciEl.textContent = (sci * 1e6).toFixed(2) + " µg"; flashElement(sciEl);
-  document.getElementById("calc-operational").textContent = (op * 1e6).toFixed(2) + " µg";
-  document.getElementById("calc-embodied").textContent = (emb * 1e6).toFixed(2) + " µg";
 
-  // Region chart
+  // Render SCI comparison box
+  renderCalcSciBox(exp, region);
+
+  // Region chart data
   const pairs = Object.keys(CARBON_PRESETS).map(r => ({
-    region: r, sci: (m.energy_kwh_per_token * CARBON_PRESETS[r] + emb) * 1e6, selected: r === region
+    region: r, sci: (m.energy_kwh_per_token * CARBON_PRESETS[r] + m.carbon_embodied_g) * 1e6
   })).sort((a, b) => a.sci - b.sci);
 
   // Push SCI data to the globe iframe
@@ -529,15 +606,49 @@ function updateCalculator() {
       type: "bar",
       data: {
         labels: pairs.map(p => p.region.split(" (")[0]),
-        datasets: [{ label: "SCI (µg)", data: pairs.map(p => p.sci),
-          backgroundColor: pairs.map(p => p.selected ? MTA.green : "#2A2A2A"), borderRadius: 4, barPercentage: .7 }]
+        datasets: [{
+          label: "SCI (µg)",
+          data: pairs.map(p => p.sci),
+          backgroundColor: pairs.map(p => {
+            if (calcChartSelectedRegions.length > 0) {
+              return calcChartSelectedRegions.includes(p.region) ? MTA.green : "#2A2A2A";
+            }
+            return p.region === region ? MTA.green : "#2A2A2A";
+          }),
+          borderRadius: 4,
+          barPercentage: .7
+        }]
       },
       options: {
         indexAxis: "y", responsive: true, maintainAspectRatio: false,
         animation: { duration: 700, easing: "easeOutCubic" },
         animations: { x: { from: 0 }, y: { duration: 0 } },
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.x.toFixed(2) + " µgCO₂/tok" } } },
-        scales: { x: { title: { display: true, text: "SCI (µgCO₂/token)" }, grid: { color: "rgba(255,255,255,0.05)" } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => c.parsed.x.toFixed(2) + " µgCO₂/tok" } }
+        },
+        scales: {
+          x: { title: { display: true, text: "SCI (µgCO₂/token)" }, grid: { color: "rgba(255,255,255,0.05)" } },
+          y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+        },
+        onHover(_evt, elements, chart) {
+          chart.canvas.style.cursor = elements.length > 0 ? "pointer" : "default";
+        },
+        onClick(evt, elements) {
+          if (elements.length === 0) return;
+          const clickedRegion = pairs[elements[0].index].region;
+          if (calcChartSelectedRegions.length < 2) {
+            if (calcChartSelectedRegions.includes(clickedRegion)) {
+              calcChartSelectedRegions = calcChartSelectedRegions.filter(r => r !== clickedRegion);
+            } else {
+              calcChartSelectedRegions = [...calcChartSelectedRegions, clickedRegion];
+            }
+          } else {
+            // Already 2 selected: next click starts fresh with the new bar
+            calcChartSelectedRegions = [clickedRegion];
+          }
+          updateCalculator();
+        }
       }
     });
   }
