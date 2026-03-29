@@ -134,85 +134,6 @@ function renderStatsBar() {
   });
 }
 
-// ─── Pareto Chart (Models = Subway Lines) ───────────────────────────────────────
-let paretoChart = null;
-
-function renderParetoChart() {
-  const data = completedData();
-  const ctx = document.getElementById("pareto-chart").getContext("2d");
-
-  // Group by model (subway line) instead of quantization
-  const models = [...new Set(data.map(d => shortModel(d.config.model_name)))];
-  const datasets = models.map(model => {
-    const points = data.filter(d => shortModel(d.config.model_name) === model);
-    const ml = MODEL_LINES[model] || { bg: MTA.gray, border: "#666" };
-    return {
-      label: ml.label || model,
-      data: points.map(p => ({
-        x: p.metrics.val_bpb, y: p.metrics.sci_per_token * 1e6,
-        r: Math.max(5, Math.min(18, p.metrics.tokens_per_sec / 12)), _raw: p
-      })),
-      backgroundColor: ml.bg + "BB", borderColor: ml.border, borderWidth: 2, hoverBorderWidth: 3
-    };
-  });
-
-  // Pareto frontier line
-  const paretoPoints = data.filter(d => d.pareto_rank === 0).sort((a, b) => a.metrics.val_bpb - b.metrics.val_bpb);
-  if (paretoPoints.length > 1) {
-    datasets.push({
-      label: "Pareto Frontier", type: "line",
-      data: paretoPoints.map(p => ({ x: p.metrics.val_bpb, y: p.metrics.sci_per_token * 1e6 })),
-      borderColor: MTA.purple, borderWidth: 2.5, borderDash: [8, 4],
-      pointRadius: 0, fill: false, tension: 0.3, order: -1
-    });
-  }
-
-  if (paretoChart) paretoChart.destroy();
-  paretoChart = new Chart(ctx, {
-    type: "bubble", data: { datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label(ctx) {
-              const r = ctx.raw._raw;
-              if (!r) return ctx.dataset.label;
-              return [
-                `${shortModel(r.config.model_name)} | ${quantLabel(r.config.quantization)}`,
-                `Batch: ${r.config.batch_size} | ${r.metrics.tokens_per_sec.toFixed(0)} tok/s`,
-                `SCI: ${(r.metrics.sci_per_token * 1e6).toFixed(1)} µgCO₂/tok`,
-                `BPB: ${r.metrics.val_bpb.toFixed(3)} | Power: ${r.metrics.gpu_power_avg_w}W`
-              ];
-            }
-          },
-          backgroundColor: MTA.black, titleColor: MTA.white, bodyColor: MTA.white,
-          padding: 12, cornerRadius: 4
-        }
-      },
-      scales: {
-        x: { title: { display: true, text: "Validation BPB (lower = better quality)", font: { weight: 600 } }, grid: { color: "rgba(0,0,0,.06)" } },
-        y: { title: { display: true, text: "SCI (µgCO₂/token) — lower = greener", font: { weight: 600 } }, grid: { color: "rgba(0,0,0,.06)" } }
-      },
-      onClick: (_, elements) => {
-        if (elements.length > 0) {
-          const el = elements[0];
-          const raw = paretoChart.data.datasets[el.datasetIndex].data[el.index]._raw;
-          if (raw) openDetailModal(raw);
-        }
-      }
-    }
-  });
-
-  // MTA-style legend with circle badges
-  const legendEl = document.getElementById("pareto-legend");
-  legendEl.innerHTML = models.map(m => {
-    const ml = MODEL_LINES[m] || { bg: MTA.gray, circle: "gray", letter: "?", label: m };
-    return `<span class="mta-legend__item">${modelBadge("x/" + m, "sm")} ${ml.label}</span>`;
-  }).join("") + `<span class="mta-legend__item"><span class="mta-legend__dot" style="background:${MTA.purple};border:2px dashed #9a2c92"></span>Pareto Frontier</span>`;
-}
-
 // ─── Preview Table ──────────────────────────────────────────────────────────────
 function renderPreviewTable() {
   const data = completedData().sort((a, b) => a.metrics.sci_per_token - b.metrics.sci_per_token).slice(0, 5);
@@ -689,7 +610,7 @@ function renderPerModelCharts() {
 
 // ─── Initialize ─────────────────────────────────────────────────────────────────
 function init() {
-  renderStatsBar(); renderParetoChart(); renderPerModelCharts(); renderPreviewTable();
+  renderStatsBar(); renderPerModelCharts(); renderPreviewTable();
   populateFilters(); renderLeaderboard();
   document.querySelectorAll("#leaderboard-tabs .mta-tab").forEach((t, i) => t.setAttribute("tabindex", i === 0 ? "0" : "-1"));
   pageInitialized.dashboard = true; pageInitialized.leaderboards = true;

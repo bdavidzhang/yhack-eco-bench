@@ -94,22 +94,6 @@
     <div class="mta-hero__bleed" aria-hidden="true">BENCH</div>
   </section>
 
-  <!-- Pareto Chart -->
-  <section class="mta-section" aria-labelledby="pareto-heading">
-    <div class="mta-container">
-      <div class="mta-chart-card">
-        <div class="flex flex--between flex--center flex--wrap flex--gap-16">
-          <div>
-            <h2 class="t-h2" id="pareto-heading">Pareto Frontier: Quality vs Carbon</h2>
-            <p class="t-small t-muted mt-8">Each dot is a station on the line. The frontier connects Pareto-optimal configs.</p>
-          </div>
-        </div>
-        <div class="mta-legend" id="pareto-legend" aria-label="Chart legend"></div>
-        <div class="mta-chart-canvas"><canvas id="pareto-chart" role="img" aria-label="Pareto frontier scatter plot"></canvas></div>
-      </div>
-    </div>
-  </section>
-
   <!-- Per-Model Analysis -->
   <section class="mta-section" aria-labelledby="permodel-heading">
     <div class="mta-container">
@@ -233,6 +217,54 @@
       <p class="t-body t-muted mb-32" style="max-width:600px">
         How we measure environmental impact. Transparent, reproducible, ISO-standard.
       </p>
+      <div class="mta-well mta-well--green mb-32">
+        <h2 class="t-h3 mb-16">What is Autoresearch?</h2>
+        <p class="t-body mb-16">
+          <a href="https://github.com/karpathy/autoresearch" class="t-bold" style="color:var(--mta-green)">Autoresearch</a>
+          is an open-source framework by <strong>Andrej Karpathy</strong> that lets AI agents run
+          research autonomously. Give an agent a small but real ML setup, and it experiments
+          on its own — modifying code, training, checking results, keeping or discarding — while you sleep.
+        </p>
+        <div class="mta-grid-2 mt-16" style="gap:var(--s16)">
+          <div>
+            <div class="t-bold">The Idea</div>
+            <p class="t-small t-muted">
+              The agent edits <code class="t-mono">train.py</code>, trains for a fixed 5-minute budget,
+              checks if val_bpb improved, and repeats. ~12 experiments/hour, ~100 overnight.
+              You wake up to a log of experiments and a better model.
+            </p>
+          </div>
+          <div>
+            <div class="t-bold">Our Twist</div>
+            <p class="t-small t-muted">
+              We adapted the autoresearch pattern for <strong>inference benchmarking</strong> on DGX Spark.
+              Instead of optimizing training loss, our agent explores inference configurations —
+              batch sizes, quantization, sequence lengths — and measures carbon cost via the SCI standard.
+            </p>
+          </div>
+          <div>
+            <div class="t-bold">How It Works</div>
+            <p class="t-small t-muted">
+              You don't touch Python. You write a <code class="t-mono">program.md</code> — a Markdown file
+              that instructs the agent. The agent reads it, runs experiments autonomously, and
+              logs every result. The "code" is the program, the program is the prompt.
+            </p>
+          </div>
+          <div>
+            <div class="t-bold">Design Philosophy</div>
+            <p class="t-small t-muted">
+              Single file to modify. Fixed time budget. Self-contained. One GPU, one file, one metric.
+              No complex configs, no distributed training — just an agent doing science.
+            </p>
+          </div>
+        </div>
+        <div class="flex flex--gap-8 mt-16">
+          <a href="https://github.com/karpathy/autoresearch" class="mta-badge mta-badge--dark mta-badge--lg" style="text-decoration:none">GitHub ↗</a>
+          <span class="mta-badge mta-badge--green mta-badge--lg">59.7k ★</span>
+          <span class="mta-badge mta-badge--dark mta-badge--lg">MIT License</span>
+        </div>
+      </div>
+
       <div class="mta-well mta-well--purple mb-32">
         <h2 class="t-h3 mb-16">The SCI Formula</h2>
         <div class="mta-formula" role="math" aria-label="SCI equals E times I plus M per R">SCI = (E × I) + M &nbsp; per R</div>
