@@ -828,62 +828,76 @@ function render3DPareto() {
     };
   });
 
-  // Efficiency surface — fit SCI as a function of throughput & latency
-  // log(SCI) ~ a*log(tps) + b*log(lat) + c, solved via least squares on the data
+  // Efficiency surface — Gaussian RBF interpolation for a smooth curved fit
   const logTps = data.map(d => Math.log10(d.metrics.tokens_per_sec));
   const logLat = data.map(d => Math.log10(d.metrics.latency_p50_ms));
   const logSci = data.map(d => Math.log10(d.metrics.sci_per_token * 1e6));
-  // Normal equations for 3-param fit: logSci = a*logTps + b*logLat + c
-  const n = data.length;
-  let sx = 0, sy = 0, sz = 0, sxx = 0, sxy = 0, sxz = 0, syy = 0, syz = 0;
-  for (let i = 0; i < n; i++) {
-    sx += logTps[i]; sy += logLat[i]; sz += logSci[i];
-    sxx += logTps[i]*logTps[i]; sxy += logTps[i]*logLat[i]; sxz += logTps[i]*logSci[i];
-    syy += logLat[i]*logLat[i]; syz += logLat[i]*logSci[i];
-  }
-  // Solve 3x3 system [sxx sxy sx; sxy syy sy; sx sy n] * [a;b;c] = [sxz;syz;sz]
-  const det = sxx*(syy*n - sy*sy) - sxy*(sxy*n - sy*sx) + sx*(sxy*sy - syy*sx);
-  const a_fit = (sxz*(syy*n - sy*sy) - sxy*(syz*n - sy*sz) + sx*(syz*sy - syy*sz)) / det;
-  const b_fit = (sxx*(syz*n - sy*sz) - sxz*(sxy*n - sy*sx) + sx*(sxy*sz - syz*sx)) / det;
-  const c_fit = (sxx*(syy*sz - syz*sy) - sxy*(sxy*sz - syz*sx) + sxz*(sxy*sy - syy*sx)) / det;
+  const nPts = data.length;
 
-  // Generate surface mesh
-  const SURF_RES = 25;
-  const tpsRange = [], latRange = [];
-  const tpsMin = Math.min(...logTps) - 0.2, tpsMax = Math.max(...logTps) + 0.2;
-  const latMin = Math.min(...logLat) - 0.2, latMax = Math.max(...logLat) + 0.2;
+  // Build surface grid in log space
+  const SURF_RES = 35;
+  const sigma = 0.45; // RBF bandwidth — controls smoothness
+  const tpsMin = Math.min(...logTps) - 0.3, tpsMax = Math.max(...logTps) + 0.3;
+  const latMin = Math.min(...logLat) - 0.3, latMax = Math.max(...logLat) + 0.3;
+  const tpsGrid = [], latGrid = [];
   for (let i = 0; i < SURF_RES; i++) {
-    tpsRange.push(Math.pow(10, tpsMin + (tpsMax - tpsMin) * i / (SURF_RES - 1)));
-    latRange.push(Math.pow(10, latMin + (latMax - latMin) * i / (SURF_RES - 1)));
+    tpsGrid.push(tpsMin + (tpsMax - tpsMin) * i / (SURF_RES - 1));
+    latGrid.push(latMin + (latMax - latMin) * i / (SURF_RES - 1));
   }
-  const surfZ = [];
+
+  // Evaluate RBF at each grid point: weighted average of data SCI values
+  const surfZ = [], surfColor = [];
+  let zMin = Infinity, zMax = -Infinity;
   for (let j = 0; j < SURF_RES; j++) {
-    const row = [];
+    const rowZ = [], rowC = [];
     for (let i = 0; i < SURF_RES; i++) {
-      const predicted = Math.pow(10, a_fit * Math.log10(tpsRange[i]) + b_fit * Math.log10(latRange[j]) + c_fit);
-      row.push(predicted);
+      let wSum = 0, vSum = 0;
+      for (let k = 0; k < nPts; k++) {
+        const dx = tpsGrid[i] - logTps[k];
+        const dy = latGrid[j] - logLat[k];
+        const w = Math.exp(-(dx * dx + dy * dy) / (2 * sigma * sigma));
+        wSum += w;
+        vSum += w * logSci[k];
+      }
+      const val = Math.pow(10, vSum / wSum);
+      rowZ.push(val);
+      rowC.push(vSum / wSum); // log-scale value for coloring
+      if (val < zMin) zMin = val;
+      if (val > zMax) zMax = val;
     }
-    surfZ.push(row);
+    surfZ.push(rowZ);
+    surfColor.push(rowC);
   }
+
+  // Convert grid to linear scale for Plotly axes
+  const tpsLinear = tpsGrid.map(v => Math.pow(10, v));
+  const latLinear = latGrid.map(v => Math.pow(10, v));
 
   traces.push({
     type: "surface",
     name: "Efficiency Surface",
-    x: tpsRange,
-    y: latRange,
+    x: tpsLinear,
+    y: latLinear,
     z: surfZ,
+    surfacecolor: surfColor,
     colorscale: [
-      [0, "rgba(0,147,60,0.35)"],
-      [0.3, "rgba(108,190,69,0.25)"],
-      [0.6, "rgba(252,204,10,0.25)"],
-      [1, "rgba(238,53,46,0.35)"]
+      [0, "#00933C"],
+      [0.25, "#6CBE45"],
+      [0.5, "#FCCC0A"],
+      [0.75, "#FF6319"],
+      [1, "#EE352E"]
     ],
-    showscale: false,
-    opacity: 0.55,
-    contours: {
-      z: { show: true, usecolormap: true, highlightcolor: "#fff", width: 1 }
+    showscale: true,
+    colorbar: {
+      title: { text: "SCI (log)", side: "right", font: { size: 11 } },
+      thickness: 14, len: 0.6, tickfont: { size: 10 }
     },
-    hoverinfo: "skip"
+    opacity: 0.7,
+    contours: {
+      z: { show: true, usecolormap: true, highlightcolor: "#fff", width: 2, size: (zMax - zMin) / 8 }
+    },
+    lighting: { ambient: 0.7, diffuse: 0.5, specular: 0.3, roughness: 0.5 },
+    hovertemplate: "Throughput: %{x:.0f} tok/s<br>Latency: %{y:.1f} ms<br>SCI: %{z:.0f} \u00B5gCO\u2082/tok<extra></extra>"
   });
 
   Plotly.newPlot("pareto3d-chart", traces, {
