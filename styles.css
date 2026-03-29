@@ -293,6 +293,7 @@ a:hover { text-decoration: underline; }
   overflow-x: auto; -webkit-overflow-scrolling: touch;
 }
 .mta-tab {
+  display: inline-flex; align-items: center; gap: var(--s8);
   padding: var(--s12) var(--s16); font-weight: 600; font-size: 14px;
   border: none; background: none; cursor: pointer; white-space: nowrap;
   color: var(--text-muted); border-bottom: 3px solid transparent;
