@@ -580,8 +580,16 @@ function initCalculator() {
       });
       document.getElementById("region-view-chart").style.display = view === "chart" ? "" : "none";
       document.getElementById("region-view-globe").style.display = view === "globe" ? "" : "none";
-      // Push latest SCI data to globe when switching to it (but preserve globe selection state)
-      if (view === "globe") updateCalculator(false);
+      if (view === "globe") {
+        // Lazy-load: set src the first time the Globe tab is opened
+        const iframe = document.getElementById("calculator-globe-iframe");
+        if (iframe && !iframe.src) {
+          iframe.src = iframe.dataset.src;
+          iframe.addEventListener("load", updateCalculator, { once: true });
+        } else {
+          updateCalculator(false);
+        }
+      }
     });
   });
 
