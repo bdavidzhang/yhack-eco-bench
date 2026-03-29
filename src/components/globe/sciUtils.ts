@@ -71,6 +71,8 @@ const INTENT_PATTERNS: { pattern: RegExp; task: TaskType; bonus: number }[] = [
   { pattern: /^(why|how|what)\s+(does|do|is|are|would|should|can|could)/i, task: 'reason', bonus: 3 },
   // "analyze/evaluate/compare X" → reason
   { pattern: /\b(analyze|analyse|evaluate|compare|assess)\s+(this|the|my|a|an|these|whether)/i, task: 'reason', bonus: 3 },
+  // "find/search for/look up sources/references/studies/information on" → reason
+  { pattern: /\b(find|search\s+for|look\s+up|locate|gather)\s+(sources?|references?|studies|papers?|evidence|information|data|articles?|research)\b/i, task: 'reason', bonus: 4 },
 ]
 
 // Weighted keywords — high-signal (domain-specific) terms score much higher
@@ -106,6 +108,9 @@ const TASK_KEYWORDS: Record<TaskType, { term: string; weight: number }[]> = {
     { term: 'strategy',   weight: 1.5 },{ term: 'research',  weight: 1.5 },
     { term: 'assess',     weight: 1.5 },{ term: 'predict',   weight: 1.5 },
     { term: 'think',      weight: 1 }, { term: 'plan',       weight: 0.8 },
+    { term: 'sources',    weight: 2 }, { term: 'references', weight: 2 },
+    { term: 'evidence',   weight: 1.5 },{ term: 'literature', weight: 2 },
+    { term: 'studies',    weight: 1.5 },{ term: 'papers',    weight: 1.5 },
     // low-signal
     { term: 'problem',    weight: 0.5 },{ term: 'question',  weight: 0.3 },
     { term: 'why',        weight: 0.3 },{ term: 'how',       weight: 0.3 },
