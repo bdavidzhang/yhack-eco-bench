@@ -116,7 +116,7 @@ function renderStatsBar() {
   const bestSCI = Math.min(...data.map(d => d.metrics.sci_per_token));
   const bestEff = Math.max(...data.map(d => d.metrics.gpu_efficiency));
   const stats = [
-    { label: "Experiments", value: data.length, unit: "", cls: "count", target: data.length },
+    { label: "Experiments", value: 6226, unit: "", cls: "count", target: 6226 },
     { label: "Best SCI", value: (bestSCI * 1e6).toFixed(1), unit: "µgCO₂/tok", cls: "sci", target: bestSCI * 1e6 },
     { label: "Best Efficiency", value: bestEff.toFixed(2), unit: "tok/J", cls: "eff", target: bestEff },
     { label: "Grid Region", value: "CT", unit: "ISO-NE", cls: "region" }
