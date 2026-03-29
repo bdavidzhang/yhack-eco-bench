@@ -52,3 +52,60 @@ export const MODELS: Record<TaskType, { name: string; sci: number; note: string;
     { name: 'GPT-4o',      sci: 91, note: 'Overkill',               best: false },
   ],
 }
+
+// ── Task classification ───────────────────────────────────────────────────────
+
+const TASK_KEYWORDS: Record<TaskType, string[]> = {
+  code: [
+    'code', 'program', 'function', 'script', 'implement', 'build', 'debug',
+    'develop', 'algorithm', 'api', 'class', 'method', 'refactor', 'generate',
+    'write', 'compile', 'test', 'unit test', 'typescript', 'python', 'javascript',
+  ],
+  reason: [
+    'analyze', 'reason', 'explain', 'why', 'how', 'solve', 'logic', 'problem',
+    'math', 'compare', 'evaluate', 'decision', 'think', 'infer', 'deduce',
+    'question', 'calculate', 'plan', 'strategy', 'research', 'assess',
+  ],
+  summ: [
+    'summarize', 'summary', 'tldr', 'brief', 'condense', 'extract', 'key points',
+    'overview', 'digest', 'shorten', 'shorter', 'recap', 'highlight', 'outline',
+    'simplify', 'compress', 'paraphrase',
+  ],
+}
+
+export function classifyTask(input: string): {
+  task: TaskType
+  confidence: 'high' | 'medium' | 'low'
+  matched: string[]
+} {
+  const text = input.toLowerCase()
+  const scores: Record<TaskType, number> = { code: 0, reason: 0, summ: 0 }
+  const matchedByTask: Record<TaskType, string[]> = { code: [], reason: [], summ: [] }
+
+  for (const [taskId, keywords] of Object.entries(TASK_KEYWORDS) as [TaskType, string[]][]) {
+    for (const kw of keywords) {
+      const hit = kw.includes(' ')
+        ? text.includes(kw)
+        : new RegExp(`\\b${kw}\\b`).test(text)
+      if (hit) {
+        scores[taskId]++
+        matchedByTask[taskId].push(kw)
+      }
+    }
+  }
+
+  const best = (Object.keys(scores) as TaskType[]).reduce((a, b) =>
+    scores[a] >= scores[b] ? a : b
+  )
+  const topScore = scores[best]
+
+  const confidence: 'high' | 'medium' | 'low' =
+    topScore >= 4 ? 'high' :
+    topScore >= 2 ? 'medium' :
+    'low'
+
+  // Low confidence → fallback to 'reason'
+  const task: TaskType = confidence === 'low' ? 'reason' : best
+
+  return { task, confidence, matched: matchedByTask[task] }
+}

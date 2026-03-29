@@ -1,7 +1,7 @@
 import React, { useRef } from 'react'
 import { GlobeScene, GlobeSceneHandle } from './GlobeScene'
 import { useGlobeStore } from './useGlobeStore'
-import { sciToColor, REGIONS } from './sciUtils'
+import { sciToColor, REGIONS, classifyTask, TaskType } from './sciUtils'
 
 // ── WebGL error boundary ──────────────────────────────────────────────────────
 
@@ -80,6 +80,131 @@ function MetricCard({ label, value, sub }: MetricCardProps) {
       <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.2 }}>{value}</div>
       <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}>{sub}</div>
+    </div>
+  )
+}
+
+// ── Task input card ───────────────────────────────────────────────────────────
+
+const TASK_LABEL: Record<TaskType, { label: string; badgeColor: string }> = {
+  code:   { label: 'Code generation', badgeColor: '#00C8A0' },
+  reason: { label: 'Reasoning',       badgeColor: '#5DB800' },
+  summ:   { label: 'Summarization',   badgeColor: '#D4860A' },
+}
+
+const CONFIDENCE_COLOR: Record<'high' | 'medium' | 'low', string> = {
+  high:   '#5DB800',
+  medium: '#D4860A',
+  low:    '#888',
+}
+
+interface TaskInputCardProps {
+  onTaskChange: () => void
+}
+
+function TaskInputCard({ onTaskChange }: TaskInputCardProps) {
+  const [inputText, setInputText] = React.useState('')
+  const [result, setResult] = React.useState<{
+    task: TaskType
+    confidence: 'high' | 'medium' | 'low'
+    matched: string[]
+  } | null>(null)
+  const { setActiveTask } = useGlobeStore()
+
+  const handleSubmit = () => {
+    if (!inputText.trim()) return
+    const classification = classifyTask(inputText)
+    setResult(classification)
+    setActiveTask(classification.task)
+    onTaskChange()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSubmit()
+  }
+
+  const taskInfo = result ? TASK_LABEL[result.task] : null
+
+  return (
+    <div style={{
+      background: 'var(--color-background-secondary)',
+      border: '0.5px solid var(--color-border-tertiary)',
+      borderRadius: 'var(--border-radius-lg)',
+      padding: 14,
+    }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 8 }}>
+        Smart task routing
+      </div>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <input
+          type="text"
+          value={inputText}
+          onChange={e => setInputText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="e.g. write a sorting algorithm…"
+          style={{
+            flex: 1,
+            padding: '7px 10px',
+            background: 'var(--color-background-primary)',
+            border: '1px solid var(--color-border-tertiary)',
+            borderRadius: 'var(--border-radius-md)',
+            fontSize: 12,
+            color: 'var(--color-text-primary)',
+            fontFamily: 'inherit',
+            outline: 'none',
+          }}
+        />
+        <button
+          onClick={handleSubmit}
+          style={{
+            padding: '7px 10px',
+            background: '#5DB800',
+            border: 'none',
+            borderRadius: 'var(--border-radius-md)',
+            fontSize: 11,
+            fontWeight: 600,
+            color: '#fff',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Route →
+        </button>
+      </div>
+
+      {result && taskInfo && (
+        <div style={{ marginTop: 10, padding: '8px 10px', background: 'rgba(93,184,0,0.06)', border: '1px solid rgba(93,184,0,0.2)', borderRadius: 'var(--border-radius-md)' }}>
+          {result.confidence === 'low' ? (
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
+              Couldn't determine task type — defaulting to Reasoning
+            </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 600, color: '#fff',
+                  background: taskInfo.badgeColor,
+                  padding: '2px 6px', borderRadius: 3,
+                }}>
+                  {taskInfo.label}
+                </span>
+                <span style={{
+                  fontSize: 10, fontWeight: 600,
+                  color: CONFIDENCE_COLOR[result.confidence],
+                  background: `${CONFIDENCE_COLOR[result.confidence]}22`,
+                  padding: '2px 6px', borderRadius: 3,
+                }}>
+                  {result.confidence} confidence
+                </span>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+                → auto-selected above
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -348,6 +473,7 @@ export function SCIGlobeDashboard() {
 
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <TaskInputCard onTaskChange={flyToActive} />
           <TaskCard onTaskChange={flyToActive} />
           <ModelRankingCard />
           <RegionListCard
