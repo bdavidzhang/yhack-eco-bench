@@ -4,6 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Stars } from '@react-three/drei'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { GlobeMesh } from './GlobeMesh'
+import { GlobeBeams } from './GlobeBeams'
 import { RegionMarker } from './RegionMarker'
 import { REGIONS, latLonToVector3 } from './sciUtils'
 
@@ -101,6 +102,7 @@ export const GlobeScene = forwardRef<GlobeSceneHandle>(function GlobeScene(_, re
       <Stars radius={100} depth={50} count={3000} factor={3} saturation={0} fade speed={0.5} />
 
       <GlobeMesh />
+      <GlobeBeams />
 
       {REGIONS.map(r => (
         <RegionMarker key={r.id} region={r} />
