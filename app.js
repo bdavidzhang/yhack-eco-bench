@@ -781,13 +781,15 @@ function renderScalingLawCharts() {
 // ─── 3D Visualizations (Plotly.js) ────────────────────────────────────────────
 
 const PLOTLY_AXIS_STYLE = {
-  gridcolor: "rgba(0,0,0,0.25)", gridwidth: 1.5,
+  showgrid: false,
   showline: true, linecolor: "#333", linewidth: 2,
-  showspikes: false, zeroline: true, zerolinecolor: "#333", zerolinewidth: 2,
+  showspikes: false, zeroline: false,
   title: { font: { size: 13, color: "#111", weight: 700 } },
   tickfont: { size: 11, color: "#444" },
-  backgroundcolor: "rgba(240,240,240,0.3)"
+  backgroundcolor: "rgba(245,245,245,0.15)"
 };
+const PLOTLY_LOG_AXIS = { ...PLOTLY_AXIS_STYLE, type: "log", dtick: 1 };
+const PLOTLY_LIN_AXIS = { ...PLOTLY_AXIS_STYLE };
 
 const PLOTLY_LAYOUT_BASE = {
   paper_bgcolor: "rgba(0,0,0,0)",
@@ -826,28 +828,71 @@ function render3DPareto() {
     };
   });
 
-  // Pareto frontier points
-  const pareto = data.filter(d => d.pareto_rank === 0);
-  if (pareto.length > 1) {
-    traces.push({
-      type: "scatter3d",
-      mode: "lines+markers",
-      name: "Pareto Frontier",
-      x: pareto.map(p => p.metrics.tokens_per_sec),
-      y: pareto.map(p => p.metrics.latency_p50_ms),
-      z: pareto.map(p => p.metrics.sci_per_token * 1e6),
-      marker: { size: 6, color: MTA.purple, symbol: "diamond" },
-      line: { color: MTA.purple, width: 4, dash: "dash" }
-    });
+  // Efficiency surface — fit SCI as a function of throughput & latency
+  // log(SCI) ~ a*log(tps) + b*log(lat) + c, solved via least squares on the data
+  const logTps = data.map(d => Math.log10(d.metrics.tokens_per_sec));
+  const logLat = data.map(d => Math.log10(d.metrics.latency_p50_ms));
+  const logSci = data.map(d => Math.log10(d.metrics.sci_per_token * 1e6));
+  // Normal equations for 3-param fit: logSci = a*logTps + b*logLat + c
+  const n = data.length;
+  let sx = 0, sy = 0, sz = 0, sxx = 0, sxy = 0, sxz = 0, syy = 0, syz = 0;
+  for (let i = 0; i < n; i++) {
+    sx += logTps[i]; sy += logLat[i]; sz += logSci[i];
+    sxx += logTps[i]*logTps[i]; sxy += logTps[i]*logLat[i]; sxz += logTps[i]*logSci[i];
+    syy += logLat[i]*logLat[i]; syz += logLat[i]*logSci[i];
   }
+  // Solve 3x3 system [sxx sxy sx; sxy syy sy; sx sy n] * [a;b;c] = [sxz;syz;sz]
+  const det = sxx*(syy*n - sy*sy) - sxy*(sxy*n - sy*sx) + sx*(sxy*sy - syy*sx);
+  const a_fit = (sxz*(syy*n - sy*sy) - sxy*(syz*n - sy*sz) + sx*(syz*sy - syy*sz)) / det;
+  const b_fit = (sxx*(syz*n - sy*sz) - sxz*(sxy*n - sy*sx) + sx*(sxy*sz - syz*sx)) / det;
+  const c_fit = (sxx*(syy*sz - syz*sy) - sxy*(sxy*sz - syz*sx) + sxz*(sxy*sy - syy*sx)) / det;
+
+  // Generate surface mesh
+  const SURF_RES = 25;
+  const tpsRange = [], latRange = [];
+  const tpsMin = Math.min(...logTps) - 0.2, tpsMax = Math.max(...logTps) + 0.2;
+  const latMin = Math.min(...logLat) - 0.2, latMax = Math.max(...logLat) + 0.2;
+  for (let i = 0; i < SURF_RES; i++) {
+    tpsRange.push(Math.pow(10, tpsMin + (tpsMax - tpsMin) * i / (SURF_RES - 1)));
+    latRange.push(Math.pow(10, latMin + (latMax - latMin) * i / (SURF_RES - 1)));
+  }
+  const surfZ = [];
+  for (let j = 0; j < SURF_RES; j++) {
+    const row = [];
+    for (let i = 0; i < SURF_RES; i++) {
+      const predicted = Math.pow(10, a_fit * Math.log10(tpsRange[i]) + b_fit * Math.log10(latRange[j]) + c_fit);
+      row.push(predicted);
+    }
+    surfZ.push(row);
+  }
+
+  traces.push({
+    type: "surface",
+    name: "Efficiency Surface",
+    x: tpsRange,
+    y: latRange,
+    z: surfZ,
+    colorscale: [
+      [0, "rgba(0,147,60,0.35)"],
+      [0.3, "rgba(108,190,69,0.25)"],
+      [0.6, "rgba(252,204,10,0.25)"],
+      [1, "rgba(238,53,46,0.35)"]
+    ],
+    showscale: false,
+    opacity: 0.55,
+    contours: {
+      z: { show: true, usecolormap: true, highlightcolor: "#fff", width: 1 }
+    },
+    hoverinfo: "skip"
+  });
 
   Plotly.newPlot("pareto3d-chart", traces, {
     ...PLOTLY_LAYOUT_BASE,
     title: { text: "Throughput \u00D7 Latency \u00D7 Carbon", font: { size: 16, weight: 700 } },
     scene: {
-      xaxis: { ...PLOTLY_AXIS_STYLE, title: "Throughput (tok/s \u2191)", type: "log" },
-      yaxis: { ...PLOTLY_AXIS_STYLE, title: "Latency P50 (ms \u2193)", type: "log" },
-      zaxis: { ...PLOTLY_AXIS_STYLE, title: "SCI (\u00B5gCO\u2082/tok \u2193)", type: "log" },
+      xaxis: { ...PLOTLY_LOG_AXIS, title: "Throughput (tok/s \u2191)" },
+      yaxis: { ...PLOTLY_LOG_AXIS, title: "Latency P50 (ms \u2193)" },
+      zaxis: { ...PLOTLY_LOG_AXIS, title: "SCI (\u00B5gCO\u2082/tok \u2193)" },
       camera: { eye: { x: 1.8, y: 1.4, z: 0.9 } }
     }
   }, { responsive: true });
@@ -914,9 +959,9 @@ function render3DScaling() {
     ...PLOTLY_LAYOUT_BASE,
     title: { text: "Scaling Law: Params \u00D7 SCI \u00D7 Confidence", font: { size: 16, weight: 700 } },
     scene: {
-      xaxis: { ...PLOTLY_AXIS_STYLE, title: "Parameters (B)", type: "log" },
-      yaxis: { ...PLOTLY_AXIS_STYLE, title: "SCI (\u00B5gCO\u2082/tok)", type: "log" },
-      zaxis: { ...PLOTLY_AXIS_STYLE, title: "% of Regression", range: [75, 125] },
+      xaxis: { ...PLOTLY_LOG_AXIS, title: "Parameters (B)" },
+      yaxis: { ...PLOTLY_LOG_AXIS, title: "SCI (\u00B5gCO\u2082/tok)" },
+      zaxis: { ...PLOTLY_LIN_AXIS, title: "% of Regression", range: [75, 125] },
       camera: { eye: { x: 1.6, y: 1.6, z: 1.0 } }
     }
   }, { responsive: true });
@@ -965,9 +1010,9 @@ function render3DSensor() {
     ...PLOTLY_LAYOUT_BASE,
     title: { text: "Sensor Timeline: Time \u00D7 Power \u00D7 Temperature", font: { size: 16, weight: 700 } },
     scene: {
-      xaxis: { ...PLOTLY_AXIS_STYLE, title: "Time (seconds)" },
-      yaxis: { ...PLOTLY_AXIS_STYLE, title: "GPU Power (W)" },
-      zaxis: { ...PLOTLY_AXIS_STYLE, title: "GPU Temp (\u00B0C)" },
+      xaxis: { ...PLOTLY_LIN_AXIS, title: "Time (seconds)" },
+      yaxis: { ...PLOTLY_LIN_AXIS, title: "GPU Power (W)" },
+      zaxis: { ...PLOTLY_LIN_AXIS, title: "GPU Temp (\u00B0C)" },
       camera: { eye: { x: 1.5, y: 1.5, z: 0.8 } }
     }
   }, { responsive: true });
