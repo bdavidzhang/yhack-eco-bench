@@ -778,12 +778,245 @@ function renderScalingLawCharts() {
     `<span class="mta-permodel-legend__item"><span class="mta-permodel-legend__dot" style="background:${MTA.red};border:2px dashed ${MTA.red}"></span>Power Law (R\u00B2=0.979)</span>`;
 }
 
+// ─── 3D Visualizations (Plotly.js) ────────────────────────────────────────────
+
+const PLOTLY_LAYOUT_BASE = {
+  paper_bgcolor: "rgba(0,0,0,0)",
+  plot_bgcolor: "rgba(0,0,0,0)",
+  font: { family: "Inter, sans-serif", size: 12, color: "#333" },
+  margin: { l: 0, r: 0, t: 40, b: 0 },
+  showlegend: true,
+  legend: { x: 0, y: 1, bgcolor: "rgba(255,255,255,0.85)", bordercolor: "#ddd", borderwidth: 1 }
+};
+
+function render3DPareto() {
+  const data = completedData();
+  const models = [...new Set(data.map(d => shortModel(d.config.model_name)))];
+  const lineColors = { "Qwen3.5-0.8B": MTA.green, "Qwen3.5-4B": MTA.yellow, "Qwen3.5-9B": MTA.red };
+
+  const traces = models.map(model => {
+    const pts = data.filter(d => shortModel(d.config.model_name) === model);
+    return {
+      type: "scatter3d",
+      mode: "markers",
+      name: model,
+      x: pts.map(p => p.metrics.val_bpb),
+      y: pts.map(p => p.metrics.tokens_per_sec),
+      z: pts.map(p => p.metrics.sci_per_token * 1e6),
+      text: pts.map(p => `${model}<br>batch=${p.config.batch_size} seq=${p.config.sequence_length}<br>` +
+        `BPB: ${p.metrics.val_bpb.toFixed(3)}<br>${p.metrics.tokens_per_sec.toFixed(0)} tok/s<br>` +
+        `SCI: ${(p.metrics.sci_per_token * 1e6).toFixed(1)} \u00B5gCO\u2082/tok`),
+      hoverinfo: "text",
+      marker: {
+        size: pts.map(p => Math.max(4, Math.min(16, p.config.batch_size / 2))),
+        color: lineColors[model] || MTA.gray,
+        opacity: 0.85,
+        line: { width: 1, color: "#333" }
+      }
+    };
+  });
+
+  // Pareto frontier points
+  const pareto = data.filter(d => d.pareto_rank === 0);
+  if (pareto.length > 1) {
+    traces.push({
+      type: "scatter3d",
+      mode: "lines+markers",
+      name: "Pareto Frontier",
+      x: pareto.map(p => p.metrics.val_bpb),
+      y: pareto.map(p => p.metrics.tokens_per_sec),
+      z: pareto.map(p => p.metrics.sci_per_token * 1e6),
+      marker: { size: 6, color: MTA.purple, symbol: "diamond" },
+      line: { color: MTA.purple, width: 4, dash: "dash" }
+    });
+  }
+
+  Plotly.newPlot("pareto3d-chart", traces, {
+    ...PLOTLY_LAYOUT_BASE,
+    title: { text: "Quality \u00D7 Throughput \u00D7 Carbon", font: { size: 16, weight: 700 } },
+    scene: {
+      xaxis: { title: "BPB (quality \u2193)", gridcolor: "#eee" },
+      yaxis: { title: "tok/s (speed \u2191)", gridcolor: "#eee" },
+      zaxis: { title: "SCI (\u00B5gCO\u2082/tok \u2193)", gridcolor: "#eee" },
+      camera: { eye: { x: 1.8, y: 1.4, z: 0.9 } }
+    }
+  }, { responsive: true });
+}
+
+function render3DScaling() {
+  const law = SCI_SCALING_LAW;
+
+  // Measured points
+  const measuredTrace = {
+    type: "scatter3d",
+    mode: "markers",
+    name: "Measured (DGX Spark)",
+    x: law.measured.map(m => m.params_b),
+    y: law.measured.map(m => m.sci_per_token * 1e6),
+    z: law.measured.map(m => m.sci_per_token * 1e6 / (law.coefficient * Math.pow(m.params_b, law.exponent) * 1e6) * 100),
+    text: law.measured.map(m => `${m.name}<br>${m.params_b}B params<br>SCI: ${(m.sci_per_token * 1e6).toFixed(1)} \u00B5gCO\u2082/tok`),
+    hoverinfo: "text",
+    marker: { size: 10, color: MTA.green, opacity: 0.9, line: { width: 2, color: "#006B2B" } }
+  };
+
+  // Predicted frontier points
+  const predTrace = {
+    type: "scatter3d",
+    mode: "markers",
+    name: "Predicted (Frontier)",
+    x: law.predicted.map(m => m.params_b),
+    y: law.predicted.map(m => m.sci_per_token * 1e6),
+    z: law.predicted.map(m => 100), // On the regression line = 100%
+    text: law.predicted.map(m => `${m.name}<br>${m.params_b}B params<br>Predicted SCI: ${(m.sci_per_token * 1e6).toFixed(1)} \u00B5gCO\u2082/tok`),
+    hoverinfo: "text",
+    marker: { size: 7, color: MTA.orange, opacity: 0.8, line: { width: 1, color: "#D4500F" } }
+  };
+
+  // Regression surface (grid)
+  const paramRange = [];
+  for (let i = -0.1; i <= 2.75; i += 0.1) paramRange.push(Math.pow(10, i));
+  const confRange = [80, 90, 100, 110, 120]; // % of regression
+  const surfX = [], surfY = [], surfZ = [];
+  for (const conf of confRange) {
+    const row_x = [], row_y = [], row_z = [];
+    for (const p of paramRange) {
+      const sci = law.coefficient * Math.pow(p, law.exponent) * 1e6 * (conf / 100);
+      row_x.push(p);
+      row_y.push(sci);
+      row_z.push(conf);
+    }
+    surfX.push(row_x);
+    surfY.push(row_y);
+    surfZ.push(row_z);
+  }
+
+  const surfaceTrace = {
+    type: "surface",
+    name: "Regression Surface",
+    x: surfX, y: surfY, z: surfZ,
+    colorscale: [[0, "rgba(0,147,60,0.15)"], [0.5, "rgba(252,204,10,0.15)"], [1, "rgba(238,53,46,0.15)"]],
+    showscale: false,
+    opacity: 0.4,
+    hoverinfo: "skip"
+  };
+
+  Plotly.newPlot("scaling3d-chart", [surfaceTrace, measuredTrace, predTrace], {
+    ...PLOTLY_LAYOUT_BASE,
+    title: { text: "Scaling Law: Params \u00D7 SCI \u00D7 Confidence", font: { size: 16, weight: 700 } },
+    scene: {
+      xaxis: { title: "Parameters (B)", type: "log", gridcolor: "#eee" },
+      yaxis: { title: "SCI (\u00B5gCO\u2082/tok)", type: "log", gridcolor: "#eee" },
+      zaxis: { title: "% of Regression", range: [75, 125], gridcolor: "#eee" },
+      camera: { eye: { x: 1.6, y: 1.6, z: 1.0 } }
+    }
+  }, { responsive: true });
+}
+
+function render3DSensor() {
+  if (typeof SENSOR_TIMESERIES === "undefined") return;
+
+  const colors = [MTA.green, MTA.yellow, MTA.red];
+  const traces = SENSOR_TIMESERIES.map((series, i) => ({
+    type: "scatter3d",
+    mode: "lines",
+    name: series.label,
+    x: series.data.map(d => d.t),
+    y: series.data.map(d => d.power),
+    z: series.data.map(d => d.temp),
+    text: series.data.map(d => `${series.label}<br>t=${d.t}s<br>Power: ${d.power}W<br>Temp: ${d.temp}\u00B0C<br>Util: ${d.util}%`),
+    hoverinfo: "text",
+    line: { color: colors[i], width: 4 },
+    opacity: 0.9
+  }));
+
+  // Add utilization as marker size on a sampled subset
+  SENSOR_TIMESERIES.forEach((series, i) => {
+    const sampled = series.data.filter((_, j) => j % 10 === 0);
+    traces.push({
+      type: "scatter3d",
+      mode: "markers",
+      name: series.label + " (util%)",
+      showlegend: false,
+      x: sampled.map(d => d.t),
+      y: sampled.map(d => d.power),
+      z: sampled.map(d => d.temp),
+      text: sampled.map(d => `Util: ${d.util}%`),
+      hoverinfo: "text",
+      marker: {
+        size: sampled.map(d => Math.max(2, d.util / 10)),
+        color: colors[i],
+        opacity: 0.5,
+        line: { width: 0 }
+      }
+    });
+  });
+
+  Plotly.newPlot("sensor3d-chart", traces, {
+    ...PLOTLY_LAYOUT_BASE,
+    title: { text: "Sensor Timeline: Time \u00D7 Power \u00D7 Temperature", font: { size: 16, weight: 700 } },
+    scene: {
+      xaxis: { title: "Time (seconds)", gridcolor: "#eee" },
+      yaxis: { title: "GPU Power (W)", gridcolor: "#eee" },
+      zaxis: { title: "GPU Temp (\u00B0C)", gridcolor: "#eee" },
+      camera: { eye: { x: 1.5, y: 1.5, z: 0.8 } }
+    }
+  }, { responsive: true });
+}
+
+// 3D tab switching
+const viz3dRendered = { pareto3d: false, scaling3d: false, sensor3d: false };
+
+function init3DTabs() {
+  const tabContainer = document.getElementById("viz3d-tabs");
+  if (!tabContainer) return;
+
+  tabContainer.addEventListener("click", e => {
+    const tab = e.target.closest(".mta-tab");
+    if (!tab) return;
+    const vizId = tab.dataset.viz3d;
+    if (!vizId) return;
+
+    // Toggle tabs
+    tabContainer.querySelectorAll(".mta-tab").forEach(t => {
+      t.classList.remove("is-selected");
+      t.setAttribute("aria-selected", "false");
+    });
+    tab.classList.add("is-selected");
+    tab.setAttribute("aria-selected", "true");
+
+    // Toggle panels
+    document.querySelectorAll(".viz3d-panel").forEach(p => { p.style.display = "none"; p.classList.remove("is-active"); });
+    const panel = document.getElementById("panel-" + vizId);
+    if (panel) { panel.style.display = "block"; panel.classList.add("is-active"); }
+
+    // Lazy render
+    if (!viz3dRendered[vizId]) {
+      if (vizId === "pareto3d") render3DPareto();
+      else if (vizId === "scaling3d") render3DScaling();
+      else if (vizId === "sensor3d") render3DSensor();
+      viz3dRendered[vizId] = true;
+    } else {
+      // Resize on tab switch (Plotly needs this)
+      Plotly.Plots.resize(document.getElementById(vizId + "-chart"));
+    }
+  });
+
+  // Render first tab
+  if (typeof Plotly !== "undefined") {
+    render3DPareto();
+    viz3dRendered.pareto3d = true;
+  }
+}
+
 // ─── Initialize ─────────────────────────────────────────────────────────────────
 function init() {
   renderStatsBar(); renderPerModelCharts(); renderScalingLawCharts(); renderPreviewTable();
   populateFilters(); renderLeaderboard();
   document.querySelectorAll("#leaderboard-tabs .mta-tab").forEach((t, i) => t.setAttribute("tabindex", i === 0 ? "0" : "-1"));
   pageInitialized.dashboard = true; pageInitialized.leaderboards = true;
+  // 3D charts (lazy-loaded via Plotly)
+  if (typeof Plotly !== "undefined") init3DTabs();
+  else window.addEventListener("load", () => { if (typeof Plotly !== "undefined") init3DTabs(); });
 }
 
 if (typeof Chart !== "undefined") document.addEventListener("DOMContentLoaded", init);

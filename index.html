@@ -11,6 +11,7 @@
   <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" /></noscript>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/plotly.js-gl3d-dist-min@2.35.3/plotly-gl3d.min.js" defer></script>
 </head>
 <body>
 
@@ -124,6 +125,37 @@
         <div style="position:relative; height:400px;">
           <canvas id="scaling-bar-chart" aria-label="Horizontal bar chart comparing predicted SCI across frontier models" role="img"></canvas>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3D Interactive Visualizations -->
+  <section class="mta-section" aria-labelledby="viz3d-heading">
+    <div class="mta-container">
+      <div class="mb-24">
+        <h2 class="t-h2" id="viz3d-heading">3D Interactive Analysis</h2>
+        <p class="t-small t-muted mt-8">Drag to rotate, scroll to zoom, hover for details. Three dimensions reveal tradeoffs invisible in 2D.</p>
+      </div>
+
+      <!-- Tab selector for 3D charts -->
+      <div class="mta-tabs mb-24" id="viz3d-tabs" role="tablist" aria-label="3D visualization selector">
+        <button class="mta-tab is-selected" data-viz3d="pareto3d" role="tab" aria-selected="true" id="tab-pareto3d">
+          <span class="mta-circle mta-circle--sm mta-circle--green">P</span> Pareto Surface</button>
+        <button class="mta-tab" data-viz3d="scaling3d" role="tab" aria-selected="false" id="tab-scaling3d">
+          <span class="mta-circle mta-circle--sm mta-circle--orange">S</span> Scaling Law</button>
+        <button class="mta-tab" data-viz3d="sensor3d" role="tab" aria-selected="false" id="tab-sensor3d">
+          <span class="mta-circle mta-circle--sm mta-circle--blue">T</span> Sensor Timeline</button>
+      </div>
+
+      <!-- 3D Chart containers -->
+      <div id="panel-pareto3d" class="viz3d-panel is-active" style="height:520px;">
+        <div id="pareto3d-chart" style="width:100%;height:100%;" aria-label="3D scatter plot: Quality vs Throughput vs Carbon"></div>
+      </div>
+      <div id="panel-scaling3d" class="viz3d-panel" style="height:520px;display:none;">
+        <div id="scaling3d-chart" style="width:100%;height:100%;" aria-label="3D scatter plot: Model size vs SCI vs Energy"></div>
+      </div>
+      <div id="panel-sensor3d" class="viz3d-panel" style="height:520px;display:none;">
+        <div id="sensor3d-chart" style="width:100%;height:100%;" aria-label="3D time series: Time vs Power vs Temperature"></div>
       </div>
     </div>
   </section>
@@ -358,6 +390,7 @@
 </footer>
 
 <script src="data.js"></script>
+<script src="sensor_timeseries.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
