@@ -106,6 +106,28 @@
     </div>
   </section>
 
+  <!-- SCI Scaling Law: Measured + Predicted -->
+  <section class="mta-section" aria-labelledby="scaling-heading">
+    <div class="mta-container">
+      <div class="mb-24">
+        <h2 class="t-h2" id="scaling-heading">SCI Scaling Law: Predicting Frontier Model Carbon</h2>
+        <p class="t-small t-muted mt-8">
+          Power-law regression fit on measured Qwen data, extrapolated to frontier models.
+          SCI = 0.000207 &times; params<sup>0.374</sup> (R&sup2; = 0.979). Frontier parameter counts are best public estimates.
+        </p>
+      </div>
+      <div class="mta-permodel-legend" id="scaling-legend" aria-label="Scaling chart legend"></div>
+      <div class="mta-permodel-grid" style="grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div style="position:relative; height:400px;">
+          <canvas id="scaling-chart" aria-label="Log-log scatter plot showing SCI scaling law with measured data and predicted frontier models" role="img"></canvas>
+        </div>
+        <div style="position:relative; height:400px;">
+          <canvas id="scaling-bar-chart" aria-label="Horizontal bar chart comparing predicted SCI across frontier models" role="img"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Top 5 Preview -->
   <section class="mta-section--sm" aria-labelledby="preview-heading">
     <div class="mta-container">

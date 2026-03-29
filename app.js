@@ -608,9 +608,179 @@ function renderPerModelCharts() {
   }).join("");
 }
 
+// ─── SCI Scaling Law Chart ────────────────────────────────────────────────────
+let scalingChart = null;
+let scalingBarChart = null;
+
+function renderScalingLawCharts() {
+  const law = SCI_SCALING_LAW;
+
+  // --- Left: Log-log scatter with regression line ---
+  const scatterCtx = document.getElementById("scaling-chart").getContext("2d");
+
+  // Regression line points (log-spaced from 0.5B to 600B)
+  const linePoints = [];
+  for (let i = -0.3; i <= 2.8; i += 0.05) {
+    const p = Math.pow(10, i);
+    const sci = law.coefficient * Math.pow(p, law.exponent) * 1e6; // µgCO2
+    linePoints.push({ x: p, y: sci });
+  }
+
+  const datasets = [
+    {
+      label: "Regression: SCI = 0.000207 × params^0.374",
+      type: "line",
+      data: linePoints,
+      borderColor: MTA.red,
+      borderWidth: 2.5,
+      borderDash: [6, 3],
+      pointRadius: 0,
+      fill: false,
+      order: 2
+    },
+    {
+      label: "Measured (DGX Spark)",
+      data: law.measured.map(m => ({
+        x: m.params_b,
+        y: m.sci_per_token * 1e6,
+        r: 12,
+        _label: m.name
+      })),
+      backgroundColor: MTA.green + "CC",
+      borderColor: MTA.green,
+      borderWidth: 2,
+      hoverBorderWidth: 3,
+      order: 0
+    },
+    {
+      label: "Predicted (Frontier)",
+      data: law.predicted.map(m => ({
+        x: m.params_b,
+        y: m.sci_per_token * 1e6,
+        r: 8,
+        _label: m.name
+      })),
+      backgroundColor: MTA.orange + "99",
+      borderColor: MTA.orange,
+      borderWidth: 1.5,
+      hoverBorderWidth: 3,
+      order: 1
+    }
+  ];
+
+  if (scalingChart) scalingChart.destroy();
+  scalingChart = new Chart(scatterCtx, {
+    type: "bubble",
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const d = ctx.raw;
+              if (d._label) {
+                return `${d._label} (${d.x}B) — ${d.y.toFixed(1)} \u00B5gCO\u2082/tok`;
+              }
+              return ctx.dataset.label;
+            }
+          },
+          backgroundColor: "#1a1a2e",
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          padding: 12,
+          cornerRadius: 7
+        }
+      },
+      scales: {
+        x: {
+          type: "logarithmic",
+          title: { display: true, text: "Model Parameters (Billions)", font: { weight: 600 } },
+          grid: { color: "rgba(0,0,0,0.05)" },
+          ticks: {
+            callback: v => {
+              const vals = [1, 5, 10, 50, 100, 500];
+              return vals.includes(v) ? v + "B" : "";
+            }
+          }
+        },
+        y: {
+          type: "logarithmic",
+          title: { display: true, text: "SCI (\u00B5gCO\u2082 / token)", font: { weight: 600 } },
+          grid: { color: "rgba(0,0,0,0.05)" }
+        }
+      }
+    }
+  });
+
+  // --- Right: Horizontal bar chart of all models sorted by SCI ---
+  const barCtx = document.getElementById("scaling-bar-chart").getContext("2d");
+  const allModels = [
+    ...law.measured.map(m => ({ ...m, type: "measured" })),
+    ...law.predicted.map(m => ({ ...m, type: "predicted" }))
+  ].sort((a, b) => a.sci_per_token - b.sci_per_token);
+
+  const barLabels = allModels.map(m => `${m.name} (${m.params_b}B)`);
+  const barValues = allModels.map(m => m.sci_per_token * 1e6);
+  const barColors = allModels.map(m =>
+    m.type === "measured" ? (MTA.green + "CC") : (MTA.orange + "99")
+  );
+
+  if (scalingBarChart) scalingBarChart.destroy();
+  scalingBarChart = new Chart(barCtx, {
+    type: "bar",
+    data: {
+      labels: barLabels,
+      datasets: [{
+        data: barValues,
+        backgroundColor: barColors,
+        borderColor: barColors.map((_, i) => allModels[i].type === "measured" ? MTA.green : MTA.orange),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.parsed.x.toFixed(1)} \u00B5gCO\u2082/token`
+          },
+          backgroundColor: "#1a1a2e",
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          padding: 12,
+          cornerRadius: 7
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "SCI (\u00B5gCO\u2082 / token)", font: { weight: 600 } },
+          grid: { color: "rgba(0,0,0,0.05)" }
+        },
+        y: {
+          ticks: { font: { size: 11 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  // Legend
+  const legendEl = document.getElementById("scaling-legend");
+  legendEl.innerHTML =
+    `<span class="mta-permodel-legend__item"><span class="mta-permodel-legend__dot" style="background:${MTA.green}"></span>Measured (DGX Spark)</span>` +
+    `<span class="mta-permodel-legend__item"><span class="mta-permodel-legend__dot" style="background:${MTA.orange}"></span>Predicted (Frontier)</span>` +
+    `<span class="mta-permodel-legend__item"><span class="mta-permodel-legend__dot" style="background:${MTA.red};border:2px dashed ${MTA.red}"></span>Power Law (R\u00B2=0.979)</span>`;
+}
+
 // ─── Initialize ─────────────────────────────────────────────────────────────────
 function init() {
-  renderStatsBar(); renderPerModelCharts(); renderPreviewTable();
+  renderStatsBar(); renderPerModelCharts(); renderScalingLawCharts(); renderPreviewTable();
   populateFilters(); renderLeaderboard();
   document.querySelectorAll("#leaderboard-tabs .mta-tab").forEach((t, i) => t.setAttribute("tabindex", i === 0 ? "0" : "-1"));
   pageInitialized.dashboard = true; pageInitialized.leaderboards = true;

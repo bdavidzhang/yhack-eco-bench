@@ -1846,6 +1846,40 @@ const BENCHMARK_DATA =
 ]
 ;
 
+// ─── SCI Scaling Law Regression ──────────────────────────────────────────────
+// Power-law fit on per-model medians from DGX Spark experiments (R² = 0.979):
+//   SCI_per_token = 0.000207 * params_B ^ 0.3738   (gCO₂/token)
+const SCI_SCALING_LAW = {
+  coefficient: 0.000207,
+  exponent: 0.3738,
+  r_squared: 0.979,
+  // Measured models (median SCI per token from experiments)
+  measured: [
+    { name: "Qwen 0.8B",  params_b: 0.8, sci_per_token: 0.000195 },
+    { name: "Qwen 4B",    params_b: 4.0, sci_per_token: 0.000326 },
+    { name: "Qwen 9B",    params_b: 9.0, sci_per_token: 0.000492 },
+  ],
+  // Predicted frontier models
+  predicted: [
+    { name: "Mistral 7B",       params_b: 7,   sci_per_token: 0.000430 },
+    { name: "GPT-4o Mini",      params_b: 8,   sci_per_token: 0.000450 },
+    { name: "GPT-3.5 Turbo",    params_b: 20,  sci_per_token: 0.000630 },
+    { name: "Claude Haiku",     params_b: 20,  sci_per_token: 0.000630 },
+    { name: "Gemini Flash",     params_b: 30,  sci_per_token: 0.000740 },
+    { name: "DeepSeek V3",      params_b: 37,  sci_per_token: 0.000800 },
+    { name: "Llama 3 70B",      params_b: 70,  sci_per_token: 0.001014 },
+    { name: "Qwen 72B",         params_b: 72,  sci_per_token: 0.001025 },
+    { name: "GPT-4o",           params_b: 200, sci_per_token: 0.001501 },
+    { name: "Claude Sonnet",    params_b: 100, sci_per_token: 0.001159 },
+    { name: "Mistral Large",    params_b: 123, sci_per_token: 0.001252 },
+    { name: "Claude Opus",      params_b: 300, sci_per_token: 0.001747 },
+    { name: "Grok 2",           params_b: 300, sci_per_token: 0.001747 },
+    { name: "Gemini Pro",       params_b: 200, sci_per_token: 0.001501 },
+    { name: "Llama 3 405B",     params_b: 405, sci_per_token: 0.001955 },
+    { name: "Gemini Ultra",     params_b: 500, sci_per_token: 0.002115 },
+  ]
+};
+
 const CARBON_PRESETS = {
   "Connecticut (ISO-NE)": 210,
   "California (CAISO)": 220,
