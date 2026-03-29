@@ -529,7 +529,7 @@ function renderPerModelCharts() {
           <span class="mta-circle mta-circle--sm mta-circle--${ml.circle}">${ml.letter}</span>
           <span style="color:${ml.bg}">${model}</span>
         </div>
-        <div class="mta-permodel-card__subtitle">${points.length} experiments &middot; BPB=${avgBpb}</div>
+        <div class="mta-permodel-card__subtitle">BPB=${avgBpb}</div>
       </div>
       <div class="mta-permodel-card__canvas"><canvas></canvas></div>`;
     grid.appendChild(card);
