@@ -1548,6 +1548,38 @@ a:hover {
   align-items: center;
 }
 
+/* ---------- Per-Model Chart Grid ---------- */
+.kz-grid--per-model {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: var(--spacing-24);
+}
+
+.kz-per-model-chart-wrap {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-solid-border-radius);
+  padding: var(--spacing-16);
+}
+
+.kz-chart-canvas-wrap--per-model {
+  height: 260px;
+}
+
+/* ---------- Hardware Telemetry ---------- */
+.kz-throttle-event {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-6) 0;
+  font-size: var(--typography-paragraph-small-font-size);
+  font-family: var(--font-data);
+}
+
+.kz-throttle-event + .kz-throttle-event {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
 /* ---------- Pareto Frontier Legend ---------- */
 .kz-legend {
   display: flex;

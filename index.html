@@ -40,6 +40,7 @@
       <ul class="kz-nav__links" id="nav-links" role="menubar">
         <li role="none"><a class="kz-nav__link is-active" href="#" data-nav="dashboard" role="menuitem" aria-current="page">Dashboard</a></li>
         <li role="none"><a class="kz-nav__link" href="#" data-nav="leaderboards" role="menuitem">Leaderboards</a></li>
+        <li role="none"><a class="kz-nav__link" href="#" data-nav="hardware" role="menuitem">Hardware</a></li>
         <li role="none"><a class="kz-nav__link" href="#" data-nav="calculator" role="menuitem">Carbon Calculator</a></li>
         <li role="none"><a class="kz-nav__link" href="#" data-nav="methodology" role="menuitem">Methodology</a></li>
       </ul>
@@ -94,6 +95,22 @@
           <div class="kz-legend" id="pareto-legend" aria-label="Chart legend"></div>
           <div class="kz-chart-canvas-wrap">
             <canvas id="pareto-chart" aria-label="Scatter plot showing BPB quality vs SCI carbon score for each experiment configuration. Click points for details." role="img"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Per-Model Scatter Charts -->
+    <section class="kz-section" aria-labelledby="per-model-heading">
+      <div class="kz-container">
+        <div class="kz-chart-wrap kz-chart-wrap--elevated">
+          <h2 class="kz-heading-2 kz-chart-wrap__title" id="per-model-heading">Per-Model Analysis: Throughput vs Carbon</h2>
+          <p class="kz-small kz-text--muted kz-mb-16">
+            Each chart shows one model family. X = tok/s, Y = SCI. Point size reflects batch size.
+            Matches the per-model scatter from <code>analyze_all.py</code>.
+          </p>
+          <div class="kz-grid kz-grid--per-model" id="per-model-charts">
+            <!-- Populated by JS: one canvas per model -->
           </div>
         </div>
       </div>
@@ -179,7 +196,152 @@
   </div>
 
   <!-- ================================================================== -->
-  <!-- Page 3: Carbon Calculator ("What If")                              -->
+  <!-- Page 3: Hardware Telemetry                                         -->
+  <!-- ================================================================== -->
+  <div class="kz-page" id="page-hardware" role="region" aria-label="Hardware Telemetry">
+    <section class="kz-section--sm">
+      <div class="kz-container">
+        <h1 class="kz-heading-1 kz-mb-8">Hardware Telemetry</h1>
+        <p class="kz-intro-lede kz-text--muted kz-mb-16">
+          Sensor data aggregated across all DGX Spark experiment runs.
+          Matches the sensor analysis in <code>analyze_all.py</code>.
+        </p>
+        <div class="kz-flex kz-flex--gap-16 kz-mb-32" id="hw-summary-badges">
+          <!-- Populated by JS: total samples, total runs -->
+        </div>
+
+        <!-- GPU Profile -->
+        <div class="kz-chart-wrap kz-chart-wrap--elevated kz-mb-32">
+          <h2 class="kz-heading-3 kz-chart-wrap__title" id="gpu-profile-heading">GPU Profile</h2>
+          <div class="kz-chart-canvas-wrap kz-chart-canvas-wrap--tall">
+            <canvas id="gpu-profile-chart" aria-label="Bar chart showing GPU sensor statistics" role="img"></canvas>
+          </div>
+          <div class="kz-table-container kz-mt-16">
+            <table class="kz-table kz-table--data" id="gpu-profile-table" aria-label="GPU sensor statistics table">
+              <thead>
+                <tr class="kz-table-header">
+                  <th class="kz-table-header-cell" scope="col">Metric</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Min</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Mean</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Median</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">P95</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Max</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Samples</th>
+                </tr>
+              </thead>
+              <tbody id="gpu-profile-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Throttle & Fault Events -->
+        <div class="kz-well kz-well--yellow kz-mb-32" id="throttle-panel">
+          <h2 class="kz-heading-3 kz-mb-16">Throttle &amp; Fault Events</h2>
+          <div id="throttle-events-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Board Thermal -->
+        <div class="kz-chart-wrap kz-mb-32">
+          <h2 class="kz-heading-3 kz-chart-wrap__title">Board Thermal</h2>
+          <div class="kz-chart-canvas-wrap">
+            <canvas id="thermal-chart" aria-label="Bar chart showing board thermal zone temperatures" role="img"></canvas>
+          </div>
+          <div class="kz-table-container kz-mt-16">
+            <table class="kz-table kz-table--data" id="thermal-table" aria-label="Board thermal sensor data">
+              <thead>
+                <tr class="kz-table-header">
+                  <th class="kz-table-header-cell" scope="col">Sensor</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Mean (&deg;C)</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Max (&deg;C)</th>
+                </tr>
+              </thead>
+              <tbody id="thermal-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Memory Profile -->
+        <div class="kz-chart-wrap kz-mb-32">
+          <h2 class="kz-heading-3 kz-chart-wrap__title">Memory Profile</h2>
+          <div class="kz-chart-canvas-wrap">
+            <canvas id="memory-chart" aria-label="Bar chart showing memory usage breakdown" role="img"></canvas>
+          </div>
+          <div class="kz-table-container kz-mt-16">
+            <table class="kz-table kz-table--data" id="memory-table" aria-label="Memory profile data">
+              <thead>
+                <tr class="kz-table-header">
+                  <th class="kz-table-header-cell" scope="col">Metric</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Mean</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Max</th>
+                </tr>
+              </thead>
+              <tbody id="memory-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PSI (Pressure Stall Information) -->
+        <div class="kz-well kz-well--blue kz-mb-32" id="psi-panel">
+          <h2 class="kz-heading-3 kz-mb-16">Pressure Stall Information (PSI)</h2>
+          <div id="psi-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- System Stats + PCIe -->
+        <div class="kz-grid kz-grid--2 kz-grid--gap-16 kz-mb-32">
+          <div class="kz-chart-wrap">
+            <h2 class="kz-heading-3 kz-chart-wrap__title">System</h2>
+            <div class="kz-table-container">
+              <table class="kz-table kz-table--data" id="system-table" aria-label="System metrics">
+                <thead>
+                  <tr class="kz-table-header">
+                    <th class="kz-table-header-cell" scope="col">Metric</th>
+                    <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Mean</th>
+                    <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Max</th>
+                  </tr>
+                </thead>
+                <tbody id="system-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="kz-well kz-well--purple" id="pcie-panel">
+            <h2 class="kz-heading-3 kz-mb-16">PCIe Link</h2>
+            <div id="pcie-details">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Per-Run Sensor Highlights -->
+        <div class="kz-chart-wrap kz-chart-wrap--elevated kz-mb-32">
+          <h2 class="kz-heading-3 kz-chart-wrap__title">Per-Run Sensor Highlights</h2>
+          <div class="kz-table-container">
+            <table class="kz-table kz-table--data" id="per-run-table" aria-label="Per-run sensor highlights">
+              <thead>
+                <tr class="kz-table-header">
+                  <th class="kz-table-header-cell" scope="col">Run</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Samples</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Duration</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">GPU avg W</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">GPU max &deg;C</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">GPU max %</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Load avg</th>
+                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Mem max GB</th>
+                </tr>
+              </thead>
+              <tbody id="per-run-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================================================================== -->
+  <!-- Page 4: Carbon Calculator ("What If")                              -->
   <!-- ================================================================== -->
   <div class="kz-page" id="page-calculator" role="region" aria-label="Carbon Calculator">
     <section class="kz-section--sm">

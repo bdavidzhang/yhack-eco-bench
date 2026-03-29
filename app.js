@@ -132,12 +132,13 @@ function tempScoreClass(temp) {
 const pages = {
   dashboard: document.getElementById("page-dashboard"),
   leaderboards: document.getElementById("page-leaderboards"),
+  hardware: document.getElementById("page-hardware"),
   calculator: document.getElementById("page-calculator"),
   methodology: document.getElementById("page-methodology")
 };
 
 // Track which pages have been initialized (lazy chart init)
-const pageInitialized = { dashboard: false, leaderboards: false, calculator: false, methodology: true };
+const pageInitialized = { dashboard: false, leaderboards: false, hardware: false, calculator: false, methodology: true };
 
 function navigate(page) {
   Object.values(pages).forEach(p => p.classList.remove("is-active"));
@@ -157,6 +158,7 @@ function navigate(page) {
   if (!pageInitialized[page]) {
     pageInitialized[page] = true;
     if (page === "calculator") initCalculator();
+    if (page === "hardware") initHardwarePage();
   }
 
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -913,10 +915,405 @@ function updateCalculator() {
   });
 }
 
+// ─── Per-Model Scatter Charts (matches display_scatter_per_model) ─────────────
+const perModelCharts = [];
+const MODEL_CHART_COLORS = ["#06b6d4", "#22c55e", "#eab308", "#d946ef", "#3b82f6", "#ef4444", "#14b8a6", "#f97316"];
+
+function renderPerModelScatter() {
+  const data = completedData();
+  const container = document.getElementById("per-model-charts");
+  const cc = getChartColors();
+
+  // Group by model
+  const groups = {};
+  data.forEach(d => {
+    const model = shortModel(d.config.model_name);
+    if (!groups[model]) groups[model] = [];
+    groups[model].push(d);
+  });
+
+  const modelNames = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
+
+  // Clean up old charts
+  perModelCharts.forEach(c => c.destroy());
+  perModelCharts.length = 0;
+  container.innerHTML = "";
+
+  modelNames.forEach((model, mi) => {
+    const exps = groups[model];
+    if (exps.length < 2) return;
+
+    const color = MODEL_CHART_COLORS[mi % MODEL_CHART_COLORS.length];
+
+    const wrap = document.createElement("div");
+    wrap.className = "kz-per-model-chart-wrap";
+    wrap.innerHTML = `
+      <h3 class="kz-heading-4 kz-mb-8" style="color:${color}">${model}</h3>
+      <p class="kz-extra-small kz-text--muted kz-mb-8">${exps.length} experiments &middot; BPB=${exps[0].metrics.val_bpb.toFixed(2)}</p>
+      <div class="kz-chart-canvas-wrap kz-chart-canvas-wrap--per-model">
+        <canvas aria-label="Scatter plot of throughput vs SCI for ${model}" role="img"></canvas>
+      </div>`;
+    container.appendChild(wrap);
+
+    const canvas = wrap.querySelector("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // Batch size → point radius mapping
+    const batchSizes = [...new Set(exps.map(e => e.config.batch_size))].sort((a, b) => a - b);
+
+    const points = exps.map(e => ({
+      x: e.metrics.tokens_per_sec,
+      y: e.metrics.sci_per_token * 1e6,
+      r: Math.max(4, 3 + batchSizes.indexOf(e.config.batch_size) * 2),
+      _raw: e
+    }));
+
+    // Pareto frontier line for this model
+    const paretoPoints = exps
+      .filter(e => e.pareto_rank === 0)
+      .sort((a, b) => a.metrics.tokens_per_sec - b.metrics.tokens_per_sec);
+
+    const datasets = [{
+      label: model,
+      data: points,
+      backgroundColor: color + "88",
+      borderColor: color,
+      borderWidth: 1.5,
+      hoverBorderWidth: 3
+    }];
+
+    if (paretoPoints.length > 1) {
+      datasets.push({
+        label: "Pareto",
+        type: "line",
+        data: paretoPoints.map(p => ({ x: p.metrics.tokens_per_sec, y: p.metrics.sci_per_token * 1e6 })),
+        borderColor: cc.paretoLine,
+        borderWidth: 2,
+        borderDash: [4, 2],
+        pointRadius: 0,
+        fill: false,
+        tension: 0.3,
+        order: -1
+      });
+    }
+
+    const chart = new Chart(ctx, {
+      type: "bubble",
+      data: { datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label(ctx) {
+                const raw = ctx.raw._raw;
+                if (!raw) return ctx.dataset.label;
+                return [
+                  `Batch: ${raw.config.batch_size} | Seq: ${raw.config.sequence_length}`,
+                  `${raw.metrics.tokens_per_sec.toFixed(0)} tok/s | ${(raw.metrics.sci_per_token * 1e6).toFixed(1)} \u00B5gCO2/tok`
+                ];
+              }
+            },
+            backgroundColor: cc.tooltipBg,
+            titleColor: cc.tooltipText,
+            bodyColor: cc.tooltipText,
+            padding: 10,
+            cornerRadius: 6
+          }
+        },
+        scales: {
+          x: { type: "logarithmic", title: { display: true, text: "tok/s (log)", font: { size: 11 } }, grid: { color: "rgba(0,0,0,0.05)" } },
+          y: { type: "logarithmic", title: { display: true, text: "SCI (\u00B5gCO2/tok, log)", font: { size: 11 } }, grid: { color: "rgba(0,0,0,0.05)" } }
+        },
+        onClick: (evt, elements) => {
+          if (elements.length > 0) {
+            const el = elements[0];
+            const raw = chart.data.datasets[el.datasetIndex].data[el.index]._raw;
+            if (raw) openDetailModal(raw);
+          }
+        }
+      }
+    });
+    perModelCharts.push(chart);
+  });
+
+  // Batch size legend
+  const allBatches = [...new Set(data.map(d => d.config.batch_size))].sort((a, b) => a - b);
+  const legendDiv = document.createElement("div");
+  legendDiv.className = "kz-legend kz-mt-8";
+  legendDiv.innerHTML = allBatches.map(bs => {
+    const size = 6 + allBatches.indexOf(bs) * 3;
+    return `<span class="kz-legend__item"><span class="kz-legend__dot" style="background:#64748b;width:${size}px;height:${size}px"></span>batch=${bs}</span>`;
+  }).join("");
+  container.appendChild(legendDiv);
+}
+
+// ─── Hardware Telemetry Page (matches sensor analysis in analyze_all.py) ──────
+let sensorData = null;
+let gpuProfileChart = null;
+let thermalChart = null;
+let memoryChart = null;
+
+async function loadSensorData() {
+  if (sensorData) return sensorData;
+  try {
+    const resp = await fetch("sensor_data.json");
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    sensorData = await resp.json();
+    return sensorData;
+  } catch (e) {
+    console.warn("sensor_data.json not found, hardware page will be empty:", e);
+    return null;
+  }
+}
+
+async function initHardwarePage() {
+  const sd = await loadSensorData();
+  if (!sd) {
+    document.getElementById("hw-summary-badges").innerHTML =
+      '<span class="kz-badge kz-badge--dark">No sensor data available. Run extract_sensor_data.py to generate.</span>';
+    return;
+  }
+
+  const cc = getChartColors();
+
+  // Summary badges
+  document.getElementById("hw-summary-badges").innerHTML = [
+    `<span class="kz-badge kz-badge--green kz-badge--lg">${sd.total_samples.toLocaleString()} sensor samples</span>`,
+    `<span class="kz-badge kz-badge--dark kz-badge--lg">${sd.total_runs} runs</span>`,
+    `<span class="kz-badge kz-badge--dark kz-badge--lg">1 Hz sampling</span>`
+  ].join("");
+
+  renderGPUProfile(sd, cc);
+  renderThrottleEvents(sd);
+  renderBoardThermal(sd, cc);
+  renderMemoryProfile(sd, cc);
+  renderPSI(sd);
+  renderSystemStats(sd);
+  renderPCIe(sd);
+  renderPerRunHighlights(sd);
+}
+
+function renderGPUProfile(sd, cc) {
+  const gp = sd.gpu_profile;
+  const keys = Object.keys(gp);
+  if (!keys.length) return;
+
+  // Table
+  document.getElementById("gpu-profile-tbody").innerHTML = keys.map(key => {
+    const m = gp[key];
+    return `<tr class="kz-table-row">
+      <td class="kz-table-cell"><strong>${m.label}</strong></td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${m.min}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono kz-score--ok">${m.mean}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${m.median}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono" style="color:var(--color-red-500)">${m.p95}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono" style="font-weight:700;color:var(--color-red-600)">${m.max}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-text--muted">${m.count.toLocaleString()}</td>
+    </tr>`;
+  }).join("");
+
+  // Chart: show key metrics (temp, power, util) as grouped bar
+  const chartMetrics = ["gpu_temp_c", "gpu_power_w", "gpu_util_pct"].filter(k => gp[k]);
+  const labels = chartMetrics.map(k => gp[k].label);
+
+  if (gpuProfileChart) gpuProfileChart.destroy();
+  gpuProfileChart = new Chart(document.getElementById("gpu-profile-chart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Min", data: chartMetrics.map(k => gp[k].min), backgroundColor: "#d1fae5", borderRadius: 3 },
+        { label: "Mean", data: chartMetrics.map(k => gp[k].mean), backgroundColor: cc.barPrimary, borderRadius: 3 },
+        { label: "P95", data: chartMetrics.map(k => gp[k].p95), backgroundColor: "#fbbf24", borderRadius: 3 },
+        { label: "Max", data: chartMetrics.map(k => gp[k].max), backgroundColor: "#ef4444", borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "top" } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: "rgba(0,0,0,0.05)" } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderThrottleEvents(sd) {
+  const te = sd.throttle_events;
+  const keys = Object.keys(te);
+  if (!keys.length) {
+    document.getElementById("throttle-events-list").innerHTML = '<div class="kz-small kz-text--muted">No throttle data available.</div>';
+    return;
+  }
+
+  document.getElementById("throttle-events-list").innerHTML = keys.map(key => {
+    const e = te[key];
+    const isTriggered = e.triggered > 0;
+    const icon = isTriggered ? "&#x26A0;" : "&#x2705;";
+    const style = isTriggered ? "color:var(--color-red-600);font-weight:600" : "";
+    return `<div class="kz-throttle-event" style="${style}">
+      <span>${icon}</span>
+      <span>${e.label}: ${isTriggered ? `${e.triggered}/${e.total} (${e.pct}%)` : "clean"}</span>
+    </div>`;
+  }).join("");
+}
+
+function renderBoardThermal(sd, cc) {
+  const bt = sd.board_thermal;
+  const keys = Object.keys(bt);
+  if (!keys.length) return;
+
+  // Table
+  document.getElementById("thermal-tbody").innerHTML = keys.map(key => {
+    const s = bt[key];
+    const maxStyle = s.max > 80 ? "font-weight:700;color:var(--color-red-600)" : "";
+    return `<tr class="kz-table-row">
+      <td class="kz-table-cell"><strong>${s.label}</strong></td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono kz-score--ok">${s.mean}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono" style="${maxStyle}">${s.max}</td>
+    </tr>`;
+  }).join("");
+
+  // Chart
+  const labels = keys.map(k => bt[k].label);
+  if (thermalChart) thermalChart.destroy();
+  thermalChart = new Chart(document.getElementById("thermal-chart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Mean (\u00B0C)", data: keys.map(k => bt[k].mean), backgroundColor: "#fbbf24", borderRadius: 3 },
+        { label: "Max (\u00B0C)", data: keys.map(k => bt[k].max), backgroundColor: keys.map(k => bt[k].max > 80 ? "#ef4444" : "#f97316"), borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "top" } },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: "\u00B0C" }, grid: { color: "rgba(0,0,0,0.05)" } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderMemoryProfile(sd, cc) {
+  const mp = sd.memory_profile;
+  const keys = Object.keys(mp);
+  if (!keys.length) return;
+
+  // Table
+  document.getElementById("memory-tbody").innerHTML = keys.map(key => {
+    const m = mp[key];
+    return `<tr class="kz-table-row">
+      <td class="kz-table-cell"><strong>${m.label} (${m.unit})</strong></td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono kz-score--ok">${m.mean}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono" style="color:var(--color-red-500)">${m.max}</td>
+    </tr>`;
+  }).join("");
+
+  // Chart (only GB metrics)
+  const gbKeys = keys.filter(k => mp[k].unit === "GB");
+  if (memoryChart) memoryChart.destroy();
+  memoryChart = new Chart(document.getElementById("memory-chart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: gbKeys.map(k => mp[k].label),
+      datasets: [
+        { label: "Mean (GB)", data: gbKeys.map(k => mp[k].mean), backgroundColor: cc.barPrimary, borderRadius: 3 },
+        { label: "Max (GB)", data: gbKeys.map(k => mp[k].max), backgroundColor: cc.barSecondary, borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "top" } },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: "GB" }, grid: { color: "rgba(0,0,0,0.05)" } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderPSI(sd) {
+  const psi = sd.psi;
+  const keys = Object.keys(psi);
+  if (!keys.length) {
+    document.getElementById("psi-list").innerHTML = '<div class="kz-small kz-text--muted">No PSI data available.</div>';
+    return;
+  }
+
+  document.getElementById("psi-list").innerHTML = keys.map(key => {
+    const p = psi[key];
+    const icon = p.max > 5 ? "&#x1F534;" : p.max > 1 ? "&#x1F7E1;" : "&#x1F7E2;";
+    return `<div class="kz-throttle-event">
+      <span>${icon}</span>
+      <span>${p.label}: mean=${p.mean.toFixed(2)}% p95=${p.p95.toFixed(2)}% max=${p.max.toFixed(2)}%</span>
+    </div>`;
+  }).join("");
+}
+
+function renderSystemStats(sd) {
+  const sys = sd.system;
+  const keys = Object.keys(sys);
+  if (!keys.length) return;
+
+  document.getElementById("system-tbody").innerHTML = keys.map(key => {
+    const s = sys[key];
+    return `<tr class="kz-table-row">
+      <td class="kz-table-cell"><strong>${s.label}</strong></td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${s.mean}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${s.max}</td>
+    </tr>`;
+  }).join("");
+}
+
+function renderPCIe(sd) {
+  const pcie = sd.pcie;
+  if (!pcie) {
+    document.getElementById("pcie-details").innerHTML = '<div class="kz-small kz-text--muted">No PCIe link data available.</div>';
+    return;
+  }
+
+  document.getElementById("pcie-details").innerHTML = `
+    <div class="kz-small">
+      <div class="kz-mb-8"><strong>Gen:</strong> min=${pcie.gen.min} mean=${pcie.gen.mean.toFixed(1)} max=${pcie.gen.max}</div>
+      <div><strong>Width:</strong> min=${pcie.width.min} mean=${pcie.width.mean.toFixed(1)} max=${pcie.width.max}</div>
+    </div>
+    <p class="kz-extra-small kz-text--muted kz-mt-16">PCIe link may change under load. C2C (chip-to-chip) on DGX Spark uses a direct interconnect.</p>`;
+}
+
+function renderPerRunHighlights(sd) {
+  const runs = sd.per_run;
+  if (!runs.length) return;
+
+  document.getElementById("per-run-tbody").innerHTML = runs.map(r => {
+    const duration = r.duration_sec != null ? `${Math.floor(r.duration_sec / 60)}m${(r.duration_sec % 60).toString().padStart(2, "0")}s` : "-";
+    return `<tr class="kz-table-row">
+      <td class="kz-table-cell"><strong>${r.name.replace("run_", "")}</strong></td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${r.samples}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${duration}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${r.gpu_power_avg_w != null ? r.gpu_power_avg_w.toFixed(1) : "-"}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono ${r.gpu_temp_max_c > 75 ? "kz-score--bad" : ""}">${r.gpu_temp_max_c != null ? r.gpu_temp_max_c : "-"}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${r.gpu_util_max_pct != null ? r.gpu_util_max_pct + "%" : "-"}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${r.load_avg_mean != null ? r.load_avg_mean.toFixed(1) : "-"}</td>
+      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${r.mem_used_max_gb != null ? r.mem_used_max_gb.toFixed(1) : "-"}</td>
+    </tr>`;
+  }).join("");
+}
+
 // ─── Initialize ───────────────────────────────────────────────────────────────
 function init() {
   renderStatsBar();
   renderParetoChart();
+  renderPerModelScatter();
   renderPreviewTable();
   populateFilters();
   renderLeaderboard();
