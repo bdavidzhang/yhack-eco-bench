@@ -800,12 +800,13 @@ function render3DPareto() {
       type: "scatter3d",
       mode: "markers",
       name: model,
-      x: pts.map(p => p.metrics.val_bpb),
-      y: pts.map(p => p.metrics.tokens_per_sec),
+      x: pts.map(p => p.metrics.tokens_per_sec),
+      y: pts.map(p => p.metrics.latency_p50_ms),
       z: pts.map(p => p.metrics.sci_per_token * 1e6),
       text: pts.map(p => `${model}<br>batch=${p.config.batch_size} seq=${p.config.sequence_length}<br>` +
-        `BPB: ${p.metrics.val_bpb.toFixed(3)}<br>${p.metrics.tokens_per_sec.toFixed(0)} tok/s<br>` +
-        `SCI: ${(p.metrics.sci_per_token * 1e6).toFixed(1)} \u00B5gCO\u2082/tok`),
+        `${p.metrics.tokens_per_sec.toFixed(0)} tok/s | P50: ${p.metrics.latency_p50_ms.toFixed(1)}ms<br>` +
+        `SCI: ${(p.metrics.sci_per_token * 1e6).toFixed(1)} \u00B5gCO\u2082/tok<br>` +
+        `Power: ${p.metrics.gpu_power_avg_w.toFixed(0)}W | BPB: ${p.metrics.val_bpb.toFixed(2)}`),
       hoverinfo: "text",
       marker: {
         size: pts.map(p => Math.max(4, Math.min(16, p.config.batch_size / 2))),
@@ -823,8 +824,8 @@ function render3DPareto() {
       type: "scatter3d",
       mode: "lines+markers",
       name: "Pareto Frontier",
-      x: pareto.map(p => p.metrics.val_bpb),
-      y: pareto.map(p => p.metrics.tokens_per_sec),
+      x: pareto.map(p => p.metrics.tokens_per_sec),
+      y: pareto.map(p => p.metrics.latency_p50_ms),
       z: pareto.map(p => p.metrics.sci_per_token * 1e6),
       marker: { size: 6, color: MTA.purple, symbol: "diamond" },
       line: { color: MTA.purple, width: 4, dash: "dash" }
@@ -833,11 +834,11 @@ function render3DPareto() {
 
   Plotly.newPlot("pareto3d-chart", traces, {
     ...PLOTLY_LAYOUT_BASE,
-    title: { text: "Quality \u00D7 Throughput \u00D7 Carbon", font: { size: 16, weight: 700 } },
+    title: { text: "Throughput \u00D7 Latency \u00D7 Carbon", font: { size: 16, weight: 700 } },
     scene: {
-      xaxis: { title: "BPB (quality \u2193)", gridcolor: "#eee" },
-      yaxis: { title: "tok/s (speed \u2191)", gridcolor: "#eee" },
-      zaxis: { title: "SCI (\u00B5gCO\u2082/tok \u2193)", gridcolor: "#eee" },
+      xaxis: { title: "Throughput (tok/s \u2191)", type: "log", gridcolor: "#eee" },
+      yaxis: { title: "Latency P50 (ms \u2193)", type: "log", gridcolor: "#eee" },
+      zaxis: { title: "SCI (\u00B5gCO\u2082/tok \u2193)", type: "log", gridcolor: "#eee" },
       camera: { eye: { x: 1.8, y: 1.4, z: 0.9 } }
     }
   }, { responsive: true });
