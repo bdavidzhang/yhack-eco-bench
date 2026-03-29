@@ -1281,3 +1281,42 @@ function init() {
 
 if (typeof Chart !== "undefined") document.addEventListener("DOMContentLoaded", init);
 else window.addEventListener("load", init);
+
+// ─── CO₂ bubble animation on hero click ──────────────────────────────────────
+(function () {
+  function spawnCO2Bubbles(originRect) {
+    var count = 9;
+    for (var i = 0; i < count; i++) {
+      var size = 34 + Math.random() * 22;
+      var bubble = document.createElement('div');
+      bubble.className = 'co2-bubble';
+      bubble.textContent = 'CO\u2082';
+      var dur = (1500 + Math.random() * 700) + 'ms';
+      var delay = (i * 110) + 'ms';
+      bubble.style.setProperty('--co2-dur', dur);
+      bubble.style.setProperty('--co2-delay', delay);
+      bubble.style.width = size + 'px';
+      bubble.style.height = size + 'px';
+      bubble.style.fontSize = Math.max(9, size * 0.27) + 'px';
+      // Spread randomly around the element
+      var cx = originRect.left + originRect.width  * (0.1 + Math.random() * 0.8);
+      var cy = originRect.top  + originRect.height * (0.2 + Math.random() * 0.6);
+      bubble.style.left = (cx - size / 2) + 'px';
+      bubble.style.top  = (cy - size / 2) + 'px';
+      document.body.appendChild(bubble);
+      var totalMs = parseFloat(dur) + parseFloat(delay) + 50;
+      setTimeout(function (el) { el.parentNode && el.parentNode.removeChild(el); }, totalMs, bubble);
+    }
+  }
+
+  function attachCO2Click() {
+    var accent = document.querySelector('.mta-hero__accent');
+    if (!accent) return;
+    accent.addEventListener('click', function () {
+      spawnCO2Bubbles(accent.getBoundingClientRect());
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachCO2Click);
+  else attachCO2Click();
+}());
