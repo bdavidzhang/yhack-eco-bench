@@ -780,13 +780,22 @@ function renderScalingLawCharts() {
 
 // ─── 3D Visualizations (Plotly.js) ────────────────────────────────────────────
 
+const PLOTLY_AXIS_STYLE = {
+  gridcolor: "rgba(0,0,0,0.25)", gridwidth: 1.5,
+  showline: true, linecolor: "#333", linewidth: 2,
+  showspikes: false, zeroline: true, zerolinecolor: "#333", zerolinewidth: 2,
+  title: { font: { size: 13, color: "#111", weight: 700 } },
+  tickfont: { size: 11, color: "#444" },
+  backgroundcolor: "rgba(240,240,240,0.3)"
+};
+
 const PLOTLY_LAYOUT_BASE = {
   paper_bgcolor: "rgba(0,0,0,0)",
   plot_bgcolor: "rgba(0,0,0,0)",
   font: { family: "Inter, sans-serif", size: 12, color: "#333" },
   margin: { l: 0, r: 0, t: 40, b: 0 },
   showlegend: true,
-  legend: { x: 0, y: 1, bgcolor: "rgba(255,255,255,0.85)", bordercolor: "#ddd", borderwidth: 1 }
+  legend: { x: 0, y: 1, bgcolor: "rgba(255,255,255,0.9)", bordercolor: "#999", borderwidth: 1, font: { size: 12 } }
 };
 
 function render3DPareto() {
@@ -836,9 +845,9 @@ function render3DPareto() {
     ...PLOTLY_LAYOUT_BASE,
     title: { text: "Throughput \u00D7 Latency \u00D7 Carbon", font: { size: 16, weight: 700 } },
     scene: {
-      xaxis: { title: "Throughput (tok/s \u2191)", type: "log", gridcolor: "#eee" },
-      yaxis: { title: "Latency P50 (ms \u2193)", type: "log", gridcolor: "#eee" },
-      zaxis: { title: "SCI (\u00B5gCO\u2082/tok \u2193)", type: "log", gridcolor: "#eee" },
+      xaxis: { ...PLOTLY_AXIS_STYLE, title: "Throughput (tok/s \u2191)", type: "log" },
+      yaxis: { ...PLOTLY_AXIS_STYLE, title: "Latency P50 (ms \u2193)", type: "log" },
+      zaxis: { ...PLOTLY_AXIS_STYLE, title: "SCI (\u00B5gCO\u2082/tok \u2193)", type: "log" },
       camera: { eye: { x: 1.8, y: 1.4, z: 0.9 } }
     }
   }, { responsive: true });
@@ -905,9 +914,9 @@ function render3DScaling() {
     ...PLOTLY_LAYOUT_BASE,
     title: { text: "Scaling Law: Params \u00D7 SCI \u00D7 Confidence", font: { size: 16, weight: 700 } },
     scene: {
-      xaxis: { title: "Parameters (B)", type: "log", gridcolor: "#eee" },
-      yaxis: { title: "SCI (\u00B5gCO\u2082/tok)", type: "log", gridcolor: "#eee" },
-      zaxis: { title: "% of Regression", range: [75, 125], gridcolor: "#eee" },
+      xaxis: { ...PLOTLY_AXIS_STYLE, title: "Parameters (B)", type: "log" },
+      yaxis: { ...PLOTLY_AXIS_STYLE, title: "SCI (\u00B5gCO\u2082/tok)", type: "log" },
+      zaxis: { ...PLOTLY_AXIS_STYLE, title: "% of Regression", range: [75, 125] },
       camera: { eye: { x: 1.6, y: 1.6, z: 1.0 } }
     }
   }, { responsive: true });
@@ -956,9 +965,9 @@ function render3DSensor() {
     ...PLOTLY_LAYOUT_BASE,
     title: { text: "Sensor Timeline: Time \u00D7 Power \u00D7 Temperature", font: { size: 16, weight: 700 } },
     scene: {
-      xaxis: { title: "Time (seconds)", gridcolor: "#eee" },
-      yaxis: { title: "GPU Power (W)", gridcolor: "#eee" },
-      zaxis: { title: "GPU Temp (\u00B0C)", gridcolor: "#eee" },
+      xaxis: { ...PLOTLY_AXIS_STYLE, title: "Time (seconds)" },
+      yaxis: { ...PLOTLY_AXIS_STYLE, title: "GPU Power (W)" },
+      zaxis: { ...PLOTLY_AXIS_STYLE, title: "GPU Temp (\u00B0C)" },
       camera: { eye: { x: 1.5, y: 1.5, z: 0.8 } }
     }
   }, { responsive: true });
