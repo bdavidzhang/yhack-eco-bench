@@ -464,9 +464,6 @@ function initCalculator() {
   });
   expSel.addEventListener("change", updateCalculator);
   regSel.addEventListener("change", updateCalculator);
-  // Re-send data once the globe iframe finishes loading
-  const globeIframe = document.getElementById("calculator-globe-iframe");
-  if (globeIframe) globeIframe.addEventListener("load", updateCalculator);
 
   // Tab switching: Bar Chart ↔ 3D Globe
   document.querySelectorAll("#region-view-tabs .mta-tab").forEach(btn => {
@@ -478,8 +475,16 @@ function initCalculator() {
       });
       document.getElementById("region-view-chart").style.display = view === "chart" ? "" : "none";
       document.getElementById("region-view-globe").style.display = view === "globe" ? "" : "none";
-      // Push latest data to globe when switching to it
-      if (view === "globe") updateCalculator();
+      if (view === "globe") {
+        // Lazy-load: set src the first time the Globe tab is opened
+        const iframe = document.getElementById("calculator-globe-iframe");
+        if (iframe && !iframe.src) {
+          iframe.src = iframe.dataset.src;
+          iframe.addEventListener("load", updateCalculator, { once: true });
+        } else {
+          updateCalculator();
+        }
+      }
     });
   });
 
