@@ -450,14 +450,34 @@ document.getElementById("detail-modal").addEventListener("click", e => { if (e.t
 // ─── Calculator ─────────────────────────────────────────────────────────────────
 let regionChart = null;
 let calcChartSelectedRegions = []; // [] | [r1] | [r1, r2]
+let globeSelectedRegions = [];     // [] | [r1] | [r1, r2] — from globe clicks
 
-function renderCalcSciBox(exp, dropdownRegion) {
+// Returns the SCI color for a region by its carbon intensity
+function regionSciColor(regionName) {
+  const intensity = CARBON_PRESETS[regionName] || 210;
+  if (intensity < 100)  return '#5DB800';
+  if (intensity < 300)  return '#D4860A';
+  if (intensity < 500)  return '#C8470A';
+  return '#E03030';
+}
+
+// selectedRegionsOverride: optional array from globe clicks (uses region-specific colors)
+function renderCalcSciBox(exp, dropdownRegion, selectedRegionsOverride) {
   const wellEl = document.getElementById("calc-sci-well");
   if (!wellEl) return;
   const m = exp.metrics;
   const emb = m.carbon_embodied_g;
 
-  if (calcChartSelectedRegions.length === 0) {
+  // Determine which selected-regions list to use
+  const sel = selectedRegionsOverride !== undefined ? selectedRegionsOverride : calcChartSelectedRegions;
+  // When rendering globe selections, use per-region colors; otherwise always green
+  const useRegionColors = selectedRegionsOverride !== undefined;
+
+  function labelColor(regionName) {
+    return useRegionColors ? regionSciColor(regionName) : MTA.green;
+  }
+
+  if (sel.length === 0) {
     const intensity = CARBON_PRESETS[dropdownRegion] || 210;
     const op = m.energy_kwh_per_token * intensity;
     const sci = op + emb;
@@ -472,14 +492,15 @@ function renderCalcSciBox(exp, dropdownRegion) {
     const sciEl = document.getElementById("calc-sci-result");
     if (sciEl) flashElement(sciEl);
 
-  } else if (calcChartSelectedRegions.length === 1) {
-    const r = calcChartSelectedRegions[0];
+  } else if (sel.length === 1) {
+    const r = sel[0];
     const intensity = CARBON_PRESETS[r] || 210;
     const op = m.energy_kwh_per_token * intensity;
     const sci = op + emb;
+    const lc = labelColor(r);
     wellEl.innerHTML = `
       <h3 class="t-h4 mb-8">Recalculated SCI</h3>
-      <div style="font-size:11px;font-weight:700;color:${MTA.green};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">${r}</div>
+      <div style="font-size:11px;font-weight:700;color:${lc};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">${r}</div>
       <div style="font-size:28px;font-weight:700" id="calc-sci-result">${(sci * 1e6).toFixed(2)} µg</div>
       <span class="t-small t-muted">gCO₂ per token</span>
       <div class="mt-16 flex flex--gap-16">
@@ -490,7 +511,7 @@ function renderCalcSciBox(exp, dropdownRegion) {
     if (sciEl) flashElement(sciEl);
 
   } else {
-    const [r1, r2] = calcChartSelectedRegions;
+    const [r1, r2] = sel;
     const int1 = CARBON_PRESETS[r1] || 210;
     const int2 = CARBON_PRESETS[r2] || 210;
     const op1 = m.energy_kwh_per_token * int1;
@@ -499,11 +520,13 @@ function renderCalcSciBox(exp, dropdownRegion) {
     const sci2 = op2 + emb;
     const diffPct = (sci2 - sci1) / sci1 * 100;
     const arrowColor = diffPct > 0 ? MTA.red : MTA.green;
+    const lc1 = labelColor(r1);
+    const lc2 = labelColor(r2);
     wellEl.innerHTML = `
       <h3 class="t-h4 mb-12">Region Comparison</h3>
       <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start">
         <div>
-          <div style="font-size:11px;font-weight:700;color:${MTA.green};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${r1}</div>
+          <div style="font-size:11px;font-weight:700;color:${lc1};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${r1}</div>
           <div style="font-size:22px;font-weight:700">${(sci1 * 1e6).toFixed(2)} µg</div>
           <div class="t-xs t-muted">CO₂/tok</div>
           <div style="margin-top:8px">
@@ -517,7 +540,7 @@ function renderCalcSciBox(exp, dropdownRegion) {
           <div class="t-xs t-muted" style="margin-top:2px">vs</div>
         </div>
         <div>
-          <div style="font-size:11px;font-weight:700;color:${MTA.green};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${r2}</div>
+          <div style="font-size:11px;font-weight:700;color:${lc2};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${r2}</div>
           <div style="font-size:22px;font-weight:700">${(sci2 * 1e6).toFixed(2)} µg</div>
           <div class="t-xs t-muted">CO₂/tok</div>
           <div style="margin-top:8px">
@@ -541,11 +564,11 @@ function initCalculator() {
     const o = document.createElement("option"); o.value = r;
     o.textContent = `${r} (${CARBON_PRESETS[r]} gCO₂/kWh)`; regSel.appendChild(o);
   });
-  expSel.addEventListener("change", () => { calcChartSelectedRegions = []; updateCalculator(); });
-  regSel.addEventListener("change", () => { calcChartSelectedRegions = []; updateCalculator(); });
+  expSel.addEventListener("change", () => { calcChartSelectedRegions = []; globeSelectedRegions = []; updateCalculator(true); });
+  regSel.addEventListener("change", () => { calcChartSelectedRegions = []; globeSelectedRegions = []; updateCalculator(true); });
   // Re-send data once the globe iframe finishes loading
   const globeIframe = document.getElementById("calculator-globe-iframe");
-  if (globeIframe) globeIframe.addEventListener("load", updateCalculator);
+  if (globeIframe) globeIframe.addEventListener("load", () => updateCalculator(true));
 
   // Tab switching: Bar Chart ↔ 3D Globe
   document.querySelectorAll("#region-view-tabs .mta-tab").forEach(btn => {
@@ -557,15 +580,16 @@ function initCalculator() {
       });
       document.getElementById("region-view-chart").style.display = view === "chart" ? "" : "none";
       document.getElementById("region-view-globe").style.display = view === "globe" ? "" : "none";
-      // Push latest data to globe when switching to it
-      if (view === "globe") updateCalculator();
+      // Push latest SCI data to globe when switching to it (but preserve globe selection state)
+      if (view === "globe") updateCalculator(false);
     });
   });
 
-  updateCalculator();
+  updateCalculator(true);
 }
 
-function updateCalculator() {
+// fromDropdown: true when triggered by dropdown change (resets globe selection)
+function updateCalculator(fromDropdown) {
   const exp = BENCHMARK_DATA.find(d => d.config_hash === document.getElementById("calc-experiment").value);
   if (!exp) return;
   const region = document.getElementById("calc-region").value;
@@ -573,8 +597,13 @@ function updateCalculator() {
   document.getElementById("calc-intensity-value").textContent = intensity;
   const m = exp.metrics;
 
-  // Render SCI comparison box
-  renderCalcSciBox(exp, region);
+  // Render SCI comparison box — use globe selections when on globe tab (unless dropdown reset)
+  const globeTabActive = document.getElementById("region-view-globe").style.display !== "none";
+  if (globeTabActive && globeSelectedRegions.length > 0 && !fromDropdown) {
+    renderCalcSciBox(exp, region, globeSelectedRegions);
+  } else {
+    renderCalcSciBox(exp, region);
+  }
 
   // Region chart data
   const pairs = Object.keys(CARBON_PRESETS).map(r => ({
@@ -588,10 +617,13 @@ function updateCalculator() {
       type: 'SET_SCI_DATA',
       data: pairs.map(p => ({ name: p.region, sci: p.sci }))
     }, '*');
-    globeIframe.contentWindow.postMessage({
-      type: 'SET_SELECTED_REGION',
-      region: region
-    }, '*');
+    // Only reset globe selection when dropdown changed
+    if (fromDropdown) {
+      globeIframe.contentWindow.postMessage({
+        type: 'SET_SELECTED_REGION',
+        region: region
+      }, '*');
+    }
   }
 
   const regionChartCanvas = document.getElementById("region-chart");

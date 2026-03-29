@@ -429,14 +429,16 @@
 <script src="sensor_timeseries.js"></script>
 <script src="app.js"></script>
 <script>
-  // Relay region selections from the calculator globe iframe back to the dropdown
+  // Handle globe tower click selections — update SCI box without touching dropdowns
   window.addEventListener('message', function(e) {
-    if (!e.data || e.data.type !== 'REGION_SELECTED') return;
-    var sel = document.getElementById('calc-region');
-    if (sel && e.data.region) {
-      sel.value = e.data.region;
-      sel.dispatchEvent(new Event('change'));
-    }
+    if (!e.data || e.data.type !== 'GLOBE_REGIONS_SELECTED') return;
+    var regions = e.data.regions || [];
+    globeSelectedRegions = regions;
+    var exp = BENCHMARK_DATA.find(function(d) {
+      return d.config_hash === document.getElementById('calc-experiment').value;
+    });
+    var dropdownRegion = document.getElementById('calc-region').value;
+    if (exp) renderCalcSciBox(exp, dropdownRegion, globeSelectedRegions);
   });
 </script>
 </body>
