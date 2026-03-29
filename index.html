@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Green LLM Bench — Sustainable AI Inference Benchmark</title>
   <meta name="description" content="How much CO2 does your LLM inference cost? Measured on NVIDIA DGX Spark using the ISO SCI standard." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" /></noscript>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 </head>
@@ -12,11 +16,11 @@
 
 <a href="#main-content" class="mta-skip">Skip to main content</a>
 
-<!-- ===== Navigation ===== -->
+<!-- ===== Navigation (Station Sign) ===== -->
 <nav class="mta-nav" aria-label="Main navigation">
   <div class="mta-nav__inner">
     <a href="#" class="mta-nav__brand" data-nav="dashboard">
-      <span class="mta-circle mta-circle--sm mta-circle--blue">G</span>
+      <span class="mta-circle mta-circle--sm mta-circle--green">G</span>
       Green LLM Bench
     </a>
     <button class="mta-nav__toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links" id="nav-toggle">&#9776;</button>
@@ -37,12 +41,9 @@
 
 <!-- ===== Page 1: Dashboard ===== -->
 <div class="mta-page is-active" id="page-dashboard" role="region" aria-label="Dashboard">
-
-  <!-- Hero (Light) -->
   <section class="mta-hero">
     <div class="mta-container">
-      <hr class="mta-rule">
-      <div class="mta-hero__layout" style="padding-top:var(--s32)">
+      <div class="mta-hero__layout">
         <div>
           <p class="mta-hero__eyebrow">YHack 2026 &middot; ASUS Sustainability Track</p>
           <h1 class="mta-hero__title">
@@ -54,11 +55,7 @@
           <div class="mta-hero__circles">
             <span class="mta-circle mta-circle--lg mta-circle--green" title="Qwen 0.8B">1</span>
             <span class="mta-circle mta-circle--lg mta-circle--yellow" title="Qwen 4B">4</span>
-            <span class="mta-circle mta-circle--lg mta-circle--blue" title="Qwen 9B">9</span>
-          </div>
-          <div class="mta-hero__arrows">
-            <span class="mta-arrow mta-arrow--yellow">↙</span>
-            <span class="mta-arrow">↗</span>
+            <span class="mta-circle mta-circle--lg mta-circle--red" title="Qwen 9B">9</span>
           </div>
         </div>
         <div class="mta-hero__right">
@@ -72,82 +69,71 @@
             <span class="mta-badge mta-badge--dark mta-badge--lg">128 GB Unified</span>
             <span class="mta-badge mta-badge--green mta-badge--lg">ISO/IEC 21031</span>
           </div>
-          <div style="margin-top:var(--s32);display:flex;gap:var(--s12)">
-            <span class="mta-arrow mta-arrow--sm mta-arrow--green">↙</span>
-            <span class="mta-arrow mta-arrow--sm mta-arrow--blue">↗</span>
-            <span class="mta-arrow mta-arrow--sm">↙</span>
-          </div>
         </div>
       </div>
 
       <!-- Subway Lines -->
       <div class="mta-subway-lines" aria-hidden="true">
-        <div class="mta-subway-line" style="background:var(--mta-green)">
+        <div class="mta-subway-line" style="background: var(--mta-green)">
           <span class="mta-station-dot"></span><span class="mta-station-dot"></span>
           <span class="mta-station-dot"></span><span class="mta-station-dot"></span>
         </div>
-        <div class="mta-subway-line" style="background:var(--mta-yellow)">
+        <div class="mta-subway-line" style="background: var(--mta-yellow)">
           <span class="mta-station-dot"></span><span class="mta-station-dot"></span>
           <span class="mta-station-dot"></span><span class="mta-station-dot"></span>
         </div>
-        <div class="mta-subway-line" style="background:var(--mta-blue)">
+        <div class="mta-subway-line" style="background: var(--mta-red)">
           <span class="mta-station-dot"></span><span class="mta-station-dot"></span>
           <span class="mta-station-dot"></span>
         </div>
       </div>
 
-      <hr class="mta-rule">
+      <!-- Stats -->
       <div class="mta-stats" id="stats-bar" aria-label="Key statistics"></div>
-      <hr class="mta-rule mb-0">
     </div>
     <div class="mta-hero__bleed" aria-hidden="true">BENCH</div>
   </section>
 
-  <!-- Pareto Chart (DARK section) -->
-  <section class="mta-section--dark" aria-labelledby="pareto-heading">
+  <!-- Pareto Chart -->
+  <section class="mta-section" aria-labelledby="pareto-heading">
     <div class="mta-container">
-      <hr class="mta-rule--muted mta-rule">
-      <div class="flex flex--between flex--center flex--wrap flex--gap-16 mt-24">
-        <div>
-          <h2 class="t-h2" id="pareto-heading">Pareto Frontier: Quality vs Carbon</h2>
-          <p class="t-small t-muted mt-8">Each dot is a station on the line. The frontier connects Pareto-optimal configs.</p>
+      <div class="mta-chart-card">
+        <div class="flex flex--between flex--center flex--wrap flex--gap-16">
+          <div>
+            <h2 class="t-h2" id="pareto-heading">Pareto Frontier: Quality vs Carbon</h2>
+            <p class="t-small t-muted mt-8">Each dot is a station on the line. The frontier connects Pareto-optimal configs.</p>
+          </div>
         </div>
-        <div class="flex flex--gap-8">
-          <span class="mta-arrow mta-arrow--sm mta-arrow--white">↙</span>
-          <span class="mta-arrow mta-arrow--sm mta-arrow--green">↗</span>
-        </div>
-      </div>
-      <div class="mta-legend mt-16" id="pareto-legend" aria-label="Chart legend"></div>
-      <div class="mta-chart-card mt-16">
+        <div class="mta-legend" id="pareto-legend" aria-label="Chart legend"></div>
         <div class="mta-chart-canvas"><canvas id="pareto-chart" role="img" aria-label="Pareto frontier scatter plot"></canvas></div>
       </div>
-      <hr class="mta-rule--muted mta-rule" style="margin-top:var(--s48)">
     </div>
   </section>
 
-  <!-- Top 5 (Light) -->
+  <!-- Top 5 Preview -->
   <section class="mta-section--sm" aria-labelledby="preview-heading">
     <div class="mta-container">
-      <hr class="mta-rule">
-      <div class="flex flex--between flex--center mt-24 mb-24">
-        <div class="flex flex--center flex--gap-16">
-          <h2 class="t-h2" id="preview-heading">Top 5 Greenest Configs</h2>
-          <span class="mta-arrow mta-arrow--sm mta-arrow--green">↙</span>
-        </div>
+      <div class="flex flex--between flex--center mb-24">
+        <h2 class="t-h2" id="preview-heading">Top 5 Greenest Configs</h2>
         <button class="mta-btn mta-btn--secondary mta-btn--sm" data-nav="leaderboards">View All →</button>
       </div>
       <div class="mta-table-wrap">
         <table class="mta-table" id="preview-table" aria-label="Top 5 greenest configs">
-          <thead><tr>
-            <th class="--center" scope="col">#</th><th scope="col">Model</th><th scope="col">Quant</th>
-            <th class="--right" scope="col">Batch</th><th class="--right" scope="col">SCI (µgCO₂/tok)</th>
-            <th class="--right" scope="col">BPB</th><th class="--right" scope="col">tok/s</th>
-            <th class="--center" scope="col">Pareto</th>
-          </tr></thead>
+          <thead>
+            <tr>
+              <th class="--center" scope="col">#</th>
+              <th scope="col">Model</th>
+              <th scope="col">Quant</th>
+              <th class="--right" scope="col">Batch</th>
+              <th class="--right" scope="col">SCI (µgCO₂/tok)</th>
+              <th class="--right" scope="col">BPB</th>
+              <th class="--right" scope="col">tok/s</th>
+              <th class="--center" scope="col">Pareto</th>
+            </tr>
+          </thead>
           <tbody id="preview-table-body"></tbody>
         </table>
       </div>
-      <hr class="mta-rule" style="margin-top:var(--s32)">
     </div>
   </section>
 </div>
@@ -156,17 +142,13 @@
 <div class="mta-page" id="page-leaderboards" role="region" aria-label="Leaderboards">
   <section class="mta-section--sm">
     <div class="mta-container">
-      <hr class="mta-rule">
-      <div class="flex flex--center flex--gap-16 mt-24 mb-24">
-        <h1 class="t-h1">Leaderboards</h1>
-        <span class="mta-arrow mta-arrow--sm mta-arrow--blue">↗</span>
-      </div>
+      <h1 class="t-h1 mb-24">Leaderboards</h1>
       <div class="mta-tabs" id="leaderboard-tabs" role="tablist" aria-label="Leaderboard categories">
         <button class="mta-tab is-selected" data-board="greenest" role="tab" aria-selected="true" id="tab-greenest">🟢 Greenest</button>
         <button class="mta-tab" data-board="efficient" role="tab" aria-selected="false" id="tab-efficient">⚡ Efficient</button>
         <button class="mta-tab" data-board="perfwatt" role="tab" aria-selected="false" id="tab-perfwatt">🔵 Perf/Watt</button>
         <button class="mta-tab" data-board="quality" role="tab" aria-selected="false" id="tab-quality">🟣 Quality</button>
-        <button class="mta-tab" data-board="fastest" role="tab" aria-selected="false" id="tab-fastest">🟠 Fastest</button>
+        <button class="mta-tab" data-board="fastest" role="tab" aria-selected="false" id="tab-fastest">🔴 Fastest</button>
         <button class="mta-tab" data-board="cheapest" role="tab" aria-selected="false" id="tab-cheapest">🟡 Cheapest</button>
       </div>
       <div class="mta-filters mt-24">
@@ -179,10 +161,10 @@
       </div>
       <div class="mta-table-wrap mt-16" id="leaderboard-panel" role="tabpanel" aria-labelledby="tab-greenest">
         <table class="mta-table" id="leaderboard-table" aria-label="Leaderboard results">
-          <thead id="leaderboard-thead"></thead><tbody id="leaderboard-tbody"></tbody>
+          <thead id="leaderboard-thead"></thead>
+          <tbody id="leaderboard-tbody"></tbody>
         </table>
       </div>
-      <hr class="mta-rule" style="margin-top:var(--s32)">
     </div>
   </section>
 </div>
@@ -191,24 +173,27 @@
 <div class="mta-page" id="page-calculator" role="region" aria-label="Carbon Calculator">
   <section class="mta-section--sm">
     <div class="mta-container">
-      <hr class="mta-rule">
-      <div class="flex flex--center flex--gap-16 mt-24 mb-8">
-        <h1 class="t-h1">Carbon Calculator</h1>
-        <span class="mta-arrow mta-arrow--sm mta-arrow--yellow">↙</span>
-        <span class="mta-arrow mta-arrow--sm">↗</span>
-      </div>
-      <p class="t-small t-muted mb-32" style="max-width:550px">Same model, same hardware — different carbon cost based on where you run it.</p>
+      <h1 class="t-h1 mb-8">Carbon Calculator</h1>
+      <p class="t-body t-muted mb-32" style="max-width:600px">
+        Same model, same hardware — different carbon cost based on where you run it.
+      </p>
       <div class="mta-calc">
         <div class="mta-calc__controls">
-          <div class="mta-card"><h3 class="t-h4 mb-16">Select Experiment</h3>
+          <div class="mta-card">
+            <h3 class="t-h4 mb-16">Select Experiment</h3>
             <label for="calc-experiment" class="sr-only">Experiment</label>
-            <select class="mta-select mta-select--full" id="calc-experiment"></select></div>
-          <div class="mta-card"><h3 class="t-h4 mb-16">Grid Region</h3>
+            <select class="mta-select mta-select--full" id="calc-experiment"></select>
+          </div>
+          <div class="mta-card">
+            <h3 class="t-h4 mb-16">Grid Region</h3>
             <label for="calc-region" class="sr-only">Region</label>
             <select class="mta-select mta-select--full" id="calc-region"></select>
-            <div class="mt-16"><span class="t-small t-muted">Intensity:</span>
+            <div class="mt-16">
+              <span class="t-small t-muted">Carbon Intensity:</span>
               <span class="t-bold" id="calc-intensity-value" aria-live="polite">--</span>
-              <span class="t-small t-muted">gCO₂/kWh</span></div></div>
+              <span class="t-small t-muted">gCO₂/kWh</span>
+            </div>
+          </div>
           <div class="mta-well mta-well--green mb-0" aria-live="polite">
             <h3 class="t-h4 mb-8">Recalculated SCI</h3>
             <div style="font-size:28px;font-weight:700" id="calc-sci-result">--</div>
@@ -216,29 +201,27 @@
             <div class="mt-16 flex flex--gap-16">
               <div><div class="t-xs t-muted">Operational</div><div class="t-bold" id="calc-operational">--</div></div>
               <div><div class="t-xs t-muted">Embodied</div><div class="t-bold" id="calc-embodied">--</div></div>
-            </div></div>
+            </div>
+          </div>
         </div>
-        <div class="mta-chart-card"><h3 class="t-h4 mb-16">SCI by Region</h3>
-          <div class="mta-chart-canvas mta-chart-canvas--tall"><canvas id="region-chart" role="img" aria-label="SCI by region"></canvas></div></div>
+        <div class="mta-chart-card">
+          <h3 class="t-h4 mb-16">SCI by Region</h3>
+          <div class="mta-chart-canvas mta-chart-canvas--tall"><canvas id="region-chart" role="img" aria-label="SCI comparison by region"></canvas></div>
+        </div>
       </div>
-      <hr class="mta-rule" style="margin-top:var(--s48)">
     </div>
   </section>
 </div>
 
-<!-- ===== Page 4: Methodology (YELLOW section) ===== -->
+<!-- ===== Page 4: Methodology ===== -->
 <div class="mta-page" id="page-methodology" role="region" aria-label="Methodology">
-  <section class="mta-section--yellow">
+  <section class="mta-section--sm">
     <div class="mta-container">
-      <hr class="mta-rule">
-      <div class="flex flex--center flex--gap-16 mt-24 mb-8">
-        <h1 class="t-h1">Methodology</h1>
-        <span class="mta-arrow mta-arrow--sm">↙</span>
-        <span class="mta-arrow mta-arrow--sm">↗</span>
-      </div>
-      <p class="t-small t-muted mb-32" style="max-width:550px">How we measure environmental impact. Transparent, reproducible, ISO-standard.</p>
-
-      <div class="mta-card mb-32">
+      <h1 class="t-h1 mb-8">Methodology</h1>
+      <p class="t-body t-muted mb-32" style="max-width:600px">
+        How we measure environmental impact. Transparent, reproducible, ISO-standard.
+      </p>
+      <div class="mta-well mta-well--purple mb-32">
         <h2 class="t-h3 mb-16">The SCI Formula</h2>
         <div class="mta-formula" role="math" aria-label="SCI equals E times I plus M per R">SCI = (E × I) + M &nbsp; per R</div>
         <div class="mta-grid-2 mt-24" style="gap:var(--s16)">
@@ -248,29 +231,23 @@
           <div><div class="t-bold">R — Functional Unit</div><p class="t-small t-muted">Per token generated. Comparable across batch sizes.</p></div>
         </div>
       </div>
-
-      <hr class="mta-rule mb-24">
       <div class="mta-method-grid">
         <div class="mta-well mta-well--blue"><h3 class="t-h4 mb-8">Hardware</h3><p class="t-small"><strong>NVIDIA DGX Spark</strong> — Blackwell GB10 · ARM big.LITTLE · 128 GB LPDDR5X · 1 TB NVMe</p></div>
         <div class="mta-well mta-well--blue"><h3 class="t-h4 mb-8">Power Measurement</h3><p class="t-small">nvidia-smi at 1 Hz. Trapezoidal integration. GPU temp, clocks, fan RPM logged.</p></div>
         <div class="mta-well mta-well--blue"><h3 class="t-h4 mb-8">Quality Metric</h3><p class="t-small"><strong>Validation BPB</strong> on held-out text. Lower = better compression quality.</p></div>
         <div class="mta-well mta-well--blue"><h3 class="t-h4 mb-8">Search Strategy</h3><p class="t-small">Grid → Random → Bayesian (Optuna). Auto-switches on convergence.</p></div>
-        <div class="mta-well"><h3 class="t-h4 mb-8">Thermal Safety</h3><p class="t-small">85°C abort. Cooldown gating between experiments. Throttling flagged.</p></div>
-        <div class="mta-well"><h3 class="t-h4 mb-8">Limitations</h3><p class="t-small">GPU power only. Embodied emissions estimated. Grid intensity is static.</p></div>
+        <div class="mta-well mta-well--yellow"><h3 class="t-h4 mb-8">Thermal Safety</h3><p class="t-small">85°C abort. Cooldown gating between experiments. Throttling flagged.</p></div>
+        <div class="mta-well mta-well--yellow"><h3 class="t-h4 mb-8">Limitations</h3><p class="t-small">GPU power only. Embodied emissions estimated. Grid intensity is static.</p></div>
       </div>
-
-      <hr class="mta-rule mt-32 mb-24">
-      <div class="mta-card">
+      <div class="mta-card mt-32">
         <div class="flex flex--center flex--gap-16">
           <span class="mta-badge mta-badge--green mta-badge--lg">ISO/IEC 21031:2024</span>
           <div>
             <div class="t-bold">Green Software Foundation — SCI</div>
-            <p class="t-small t-muted">ISO standard for measuring software carbon emissions.</p>
+            <p class="t-small t-muted">ISO standard for measuring software carbon emissions. Per-request functional units.</p>
           </div>
-          <span class="mta-arrow mta-arrow--sm mta-arrow--green">↙</span>
         </div>
       </div>
-      <hr class="mta-rule" style="margin-top:var(--s32)">
     </div>
   </section>
 </div>
@@ -285,25 +262,22 @@
       <h2 class="t-h2" id="modal-title">Experiment Detail</h2>
       <div class="mta-config-tags mt-8" id="modal-config-tags"></div>
     </div>
-    <hr class="mta-rule--thin mta-rule mb-24">
     <div class="mta-metrics-grid" id="modal-metrics"></div>
-    <hr class="mta-rule--thin mta-rule mt-24 mb-24">
-    <div>
+    <div class="mt-24">
       <h3 class="t-h4 mb-16">SCI Breakdown</h3>
       <div class="mta-grid-2">
         <div class="mta-pie-wrap"><canvas id="modal-pie-chart" role="img" aria-label="Carbon split"></canvas></div>
         <div id="modal-sci-details"></div>
       </div>
     </div>
-    <hr class="mta-rule--thin mta-rule mt-24 mb-24">
-    <div>
+    <div class="mt-24">
       <h3 class="t-h4 mb-16">Latency Distribution</h3>
       <div class="mta-latency-wrap"><canvas id="modal-latency-chart" role="img" aria-label="Latency percentiles"></canvas></div>
     </div>
   </div>
 </div>
 
-<!-- ===== Footer ===== -->
+<!-- ===== Footer (MetroCard) ===== -->
 <footer class="mta-footer">
   <div class="mta-footer__stripe"></div>
   <div class="mta-footer__inner">
@@ -311,13 +285,12 @@
       <div class="mta-footer__brand">Green LLM Bench</div>
       <p class="t-small mt-8">Built at YHack &bull; Yale's Hackathon &bull; ASUS Sustainability</p>
     </div>
-    <div><p class="t-small">Powered by <strong style="color:#fff">NVIDIA DGX Spark</strong><br>SCI Standard: ISO/IEC 21031:2024</p></div>
     <div>
-      <div class="flex flex--gap-8 mb-8">
-        <span class="mta-arrow mta-arrow--sm mta-arrow--yellow">↙</span>
-        <span class="mta-arrow mta-arrow--sm mta-arrow--white">↗</span>
-      </div>
-      <p class="t-small">Design: MTA signage system<br><a href="https://github.com/cultureamp/kaizen-design-system">Open Source</a></p>
+      <p class="t-small">Powered by <strong style="color:#fff">NVIDIA DGX Spark</strong><br>SCI Standard: ISO/IEC 21031:2024</p>
+    </div>
+    <div>
+      <p class="t-small">Design: MTA-inspired signage system<br>
+        <a href="https://github.com/cultureamp/kaizen-design-system">Open Source</a></p>
     </div>
   </div>
 </footer>
