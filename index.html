@@ -4,595 +4,298 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Green LLM Bench — Sustainable AI Inference Benchmark</title>
-  <meta name="description" content="How much CO2 does your LLM inference cost? We measured it on NVIDIA DGX Spark using the ISO SCI standard." />
-
-  <!-- Preconnect for external resources -->
+  <meta name="description" content="How much CO2 does your LLM inference cost? Measured on NVIDIA DGX Spark using the ISO SCI standard." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-
-  <!-- Google Fonts — non-render-blocking -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" /></noscript>
-
-  <!-- Kaizen Design Tokens -->
-  <link rel="stylesheet" href="kaizen-design-system/packages/design-tokens/css/variables.css" />
-  <!-- App Styles -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" /></noscript>
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- Chart.js for visualizations -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
 
-  <!-- Skip to content -->
-  <a href="#main-content" class="kz-skip-link">Skip to main content</a>
+<a href="#main-content" class="mta-skip">Skip to main content</a>
 
-  <!-- ================================================================== -->
-  <!-- Navigation Bar                                                     -->
-  <!-- ================================================================== -->
-  <nav class="kz-nav" aria-label="Main navigation">
-    <div class="kz-nav__inner">
-      <a href="#" class="kz-nav__brand" data-nav="dashboard">
-        Green LLM Bench
-      </a>
-      <button class="kz-nav__toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links" id="nav-toggle">&#9776;</button>
-      <ul class="kz-nav__links" id="nav-links" role="menubar">
-        <li role="none"><a class="kz-nav__link is-active" href="#" data-nav="dashboard" role="menuitem" aria-current="page">Dashboard</a></li>
-        <li role="none"><a class="kz-nav__link" href="#" data-nav="leaderboards" role="menuitem">Leaderboards</a></li>
-        <li role="none"><a class="kz-nav__link" href="#" data-nav="hardware" role="menuitem">Hardware</a></li>
-        <li role="none"><a class="kz-nav__link" href="#" data-nav="calculator" role="menuitem">Carbon Calculator</a></li>
-        <li role="none"><a class="kz-nav__link" href="#" data-nav="methodology" role="menuitem">Methodology</a></li>
-      </ul>
-    </div>
-  </nav>
+<!-- ===== Navigation (Station Sign) ===== -->
+<nav class="mta-nav" aria-label="Main navigation">
+  <div class="mta-nav__inner">
+    <a href="#" class="mta-nav__brand" data-nav="dashboard">
+      <span class="mta-circle mta-circle--sm mta-circle--green">G</span>
+      Green LLM Bench
+    </a>
+    <button class="mta-nav__toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links" id="nav-toggle">&#9776;</button>
+    <ul class="mta-nav__links" id="nav-links" role="menubar">
+      <li role="none"><a class="mta-nav__link is-active" href="#" data-nav="dashboard" role="menuitem" aria-current="page">
+        <span class="mta-circle mta-circle--sm mta-circle--lime">D</span> Dashboard</a></li>
+      <li role="none"><a class="mta-nav__link" href="#" data-nav="leaderboards" role="menuitem">
+        <span class="mta-circle mta-circle--sm mta-circle--blue">L</span> Leaderboards</a></li>
+      <li role="none"><a class="mta-nav__link" href="#" data-nav="calculator" role="menuitem">
+        <span class="mta-circle mta-circle--sm mta-circle--orange">C</span> Calculator</a></li>
+      <li role="none"><a class="mta-nav__link" href="#" data-nav="methodology" role="menuitem">
+        <span class="mta-circle mta-circle--sm mta-circle--purple">M</span> Methodology</a></li>
+    </ul>
+  </div>
+</nav>
 
-  <!-- ================================================================== -->
-  <!-- Main Content                                                       -->
-  <!-- ================================================================== -->
-  <main id="main-content">
+<main id="main-content">
 
-  <!-- ================================================================== -->
-  <!-- Page 1: Dashboard / Landing                                        -->
-  <!-- ================================================================== -->
-  <div class="kz-page is-active" id="page-dashboard" role="region" aria-label="Dashboard">
-
-    <!-- Hero -->
-    <section class="kz-hero">
-      <div class="kz-container">
-        <p class="kz-hero__eyebrow">YHack 2026 &middot; ASUS Sustainability Track</p>
-        <h1 class="kz-hero__title">How much CO<sub>2</sub> does your LLM inference cost?</h1>
-        <p class="kz-hero__subtitle">
-          We measured it &mdash; autonomously testing inference configs on DGX Spark,
-          scored with the ISO SCI standard.
-        </p>
-        <div class="kz-hero__hardware" aria-label="Hardware specifications">
-          <span class="kz-badge kz-badge--dark kz-badge--lg">DGX Spark &middot; Blackwell GB10</span>
-          <span class="kz-badge kz-badge--dark kz-badge--lg">128 GB Unified</span>
-          <span class="kz-badge kz-badge--green kz-badge--lg">ISO/IEC 21031:2024</span>
-        </div>
-
-        <!-- Stats Bar -->
-        <div class="kz-stats-bar" id="stats-bar" aria-label="Key statistics">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- Pareto Frontier Chart -->
-    <section class="kz-section" aria-labelledby="pareto-heading">
-      <div class="kz-container">
-        <div class="kz-chart-wrap kz-chart-wrap--elevated">
-          <div class="kz-flex kz-flex--between kz-flex--center kz-flex--wrap kz-flex--gap-16">
-            <div>
-              <h2 class="kz-heading-2 kz-chart-wrap__title" id="pareto-heading">Pareto Frontier: Quality vs Carbon</h2>
-              <p class="kz-small kz-text--muted">
-                Each point is an experiment config. The frontier line connects Pareto-optimal configs &mdash;
-                you can't improve one axis without worsening the other.
-              </p>
-            </div>
-          </div>
-          <div class="kz-legend" id="pareto-legend" aria-label="Chart legend"></div>
-          <div class="kz-chart-canvas-wrap">
-            <canvas id="pareto-chart" aria-label="Scatter plot showing BPB quality vs SCI carbon score for each experiment configuration. Click points for details." role="img"></canvas>
+<!-- ===== Page 1: Dashboard ===== -->
+<div class="mta-page is-active" id="page-dashboard" role="region" aria-label="Dashboard">
+  <section class="mta-hero">
+    <div class="mta-container">
+      <div class="mta-hero__layout">
+        <div>
+          <p class="mta-hero__eyebrow">YHack 2026 &middot; ASUS Sustainability Track</p>
+          <h1 class="mta-hero__title">
+            How much<br>
+            <span class="mta-hero__accent">CO<sub>2</sub></span><br>
+            does your LLM<br>
+            inference cost?
+          </h1>
+          <div class="mta-hero__circles">
+            <span class="mta-circle mta-circle--lg mta-circle--green" title="Qwen 0.8B">1</span>
+            <span class="mta-circle mta-circle--lg mta-circle--yellow" title="Qwen 4B">4</span>
+            <span class="mta-circle mta-circle--lg mta-circle--red" title="Qwen 9B">9</span>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- Per-Model Scatter Charts -->
-    <section class="kz-section" aria-labelledby="per-model-heading">
-      <div class="kz-container">
-        <div class="kz-chart-wrap kz-chart-wrap--elevated">
-          <h2 class="kz-heading-2 kz-chart-wrap__title" id="per-model-heading">Per-Model Analysis: Throughput vs Carbon</h2>
-          <p class="kz-small kz-text--muted kz-mb-16">
-            Each chart shows one model family. X = tok/s, Y = SCI. Point size reflects batch size.
-            Matches the per-model scatter from <code>analyze_all.py</code>.
+        <div class="mta-hero__right">
+          <p class="mta-hero__desc">
+            We autonomously tested inference configs on NVIDIA DGX Spark,
+            scored with the ISO SCI standard. Each model is a line.
+            Each config is a station.
           </p>
-          <div class="kz-grid kz-grid--per-model" id="per-model-charts">
-            <!-- Populated by JS: one canvas per model -->
+          <div class="mta-hero__badges">
+            <span class="mta-badge mta-badge--dark mta-badge--lg">DGX Spark &middot; GB10</span>
+            <span class="mta-badge mta-badge--dark mta-badge--lg">128 GB Unified</span>
+            <span class="mta-badge mta-badge--green mta-badge--lg">ISO/IEC 21031</span>
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- Quick Leaderboard Preview -->
-    <section class="kz-section--sm" aria-labelledby="preview-heading">
-      <div class="kz-container">
-        <div class="kz-flex kz-flex--between kz-flex--center kz-mb-24">
-          <h2 class="kz-heading-2" id="preview-heading">Top 5 Greenest Configs</h2>
-          <button class="kz-btn kz-btn--secondary kz-btn--sm" data-nav="leaderboards">View All Leaderboards</button>
+      <!-- Subway Lines -->
+      <div class="mta-subway-lines" aria-hidden="true">
+        <div class="mta-subway-line" style="background: var(--mta-green)">
+          <span class="mta-station-dot"></span><span class="mta-station-dot"></span>
+          <span class="mta-station-dot"></span><span class="mta-station-dot"></span>
         </div>
-        <div class="kz-table-container">
-          <table class="kz-table kz-table--data" id="preview-table" aria-label="Top 5 greenest experiment configurations">
-            <thead>
-              <tr class="kz-table-header">
-                <th class="kz-table-header-cell kz-table-header-cell--center" scope="col">#</th>
-                <th class="kz-table-header-cell" scope="col">Model</th>
-                <th class="kz-table-header-cell" scope="col">Quant</th>
-                <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Batch</th>
-                <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">SCI (gCO2/tok)</th>
-                <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">BPB</th>
-                <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">tok/s</th>
-                <th class="kz-table-header-cell kz-table-header-cell--center" scope="col">Pareto</th>
-              </tr>
-            </thead>
-            <tbody id="preview-table-body">
-              <!-- Populated by JS -->
-            </tbody>
-          </table>
+        <div class="mta-subway-line" style="background: var(--mta-yellow)">
+          <span class="mta-station-dot"></span><span class="mta-station-dot"></span>
+          <span class="mta-station-dot"></span><span class="mta-station-dot"></span>
         </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- ================================================================== -->
-  <!-- Page 2: Leaderboards                                               -->
-  <!-- ================================================================== -->
-  <div class="kz-page" id="page-leaderboards" role="region" aria-label="Leaderboards">
-    <section class="kz-section--sm">
-      <div class="kz-container">
-        <h1 class="kz-heading-1 kz-mb-24">Leaderboards</h1>
-
-        <!-- Leaderboard Tabs — proper ARIA tab pattern -->
-        <div class="kz-tabs" id="leaderboard-tabs" role="tablist" aria-label="Leaderboard categories">
-          <button class="kz-tab is-selected" data-board="greenest" role="tab" aria-selected="true" aria-controls="leaderboard-panel" id="tab-greenest">Greenest</button>
-          <button class="kz-tab" data-board="efficient" role="tab" aria-selected="false" aria-controls="leaderboard-panel" id="tab-efficient">Most Efficient</button>
-          <button class="kz-tab" data-board="perfwatt" role="tab" aria-selected="false" aria-controls="leaderboard-panel" id="tab-perfwatt">Perf / Watt</button>
-          <button class="kz-tab" data-board="quality" role="tab" aria-selected="false" aria-controls="leaderboard-panel" id="tab-quality">Best Quality</button>
-          <button class="kz-tab" data-board="fastest" role="tab" aria-selected="false" aria-controls="leaderboard-panel" id="tab-fastest">Fastest</button>
-          <button class="kz-tab" data-board="cheapest" role="tab" aria-selected="false" aria-controls="leaderboard-panel" id="tab-cheapest">Cheapest</button>
-        </div>
-
-        <!-- Filters -->
-        <div class="kz-filter-bar kz-mt-24">
-          <label for="filter-model">Model:</label>
-          <select class="kz-select" id="filter-model">
-            <option value="all">All Models</option>
-          </select>
-          <label for="filter-quant">Quantization:</label>
-          <select class="kz-select" id="filter-quant">
-            <option value="all">All</option>
-          </select>
-          <label for="filter-batch">Batch Size:</label>
-          <select class="kz-select" id="filter-batch">
-            <option value="all">All</option>
-          </select>
-        </div>
-
-        <!-- Leaderboard Table -->
-        <div class="kz-table-container kz-mt-16" id="leaderboard-panel" role="tabpanel" aria-labelledby="tab-greenest">
-          <table class="kz-table kz-table--data" id="leaderboard-table" aria-label="Leaderboard results">
-            <thead id="leaderboard-thead">
-              <!-- Populated by JS based on active tab -->
-            </thead>
-            <tbody id="leaderboard-tbody">
-              <!-- Populated by JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- ================================================================== -->
-  <!-- Page 3: Hardware Telemetry                                         -->
-  <!-- ================================================================== -->
-  <div class="kz-page" id="page-hardware" role="region" aria-label="Hardware Telemetry">
-    <section class="kz-section--sm">
-      <div class="kz-container">
-        <h1 class="kz-heading-1 kz-mb-8">Hardware Telemetry</h1>
-        <p class="kz-intro-lede kz-text--muted kz-mb-16">
-          Sensor data aggregated across all DGX Spark experiment runs.
-          Matches the sensor analysis in <code>analyze_all.py</code>.
-        </p>
-        <div class="kz-flex kz-flex--gap-16 kz-mb-32" id="hw-summary-badges">
-          <!-- Populated by JS: total samples, total runs -->
-        </div>
-
-        <!-- GPU Profile -->
-        <div class="kz-chart-wrap kz-chart-wrap--elevated kz-mb-32">
-          <h2 class="kz-heading-3 kz-chart-wrap__title" id="gpu-profile-heading">GPU Profile</h2>
-          <div class="kz-chart-canvas-wrap kz-chart-canvas-wrap--tall">
-            <canvas id="gpu-profile-chart" aria-label="Bar chart showing GPU sensor statistics" role="img"></canvas>
-          </div>
-          <div class="kz-table-container kz-mt-16">
-            <table class="kz-table kz-table--data" id="gpu-profile-table" aria-label="GPU sensor statistics table">
-              <thead>
-                <tr class="kz-table-header">
-                  <th class="kz-table-header-cell" scope="col">Metric</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Min</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Mean</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Median</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">P95</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Max</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Samples</th>
-                </tr>
-              </thead>
-              <tbody id="gpu-profile-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Throttle & Fault Events -->
-        <div class="kz-well kz-well--yellow kz-mb-32" id="throttle-panel">
-          <h2 class="kz-heading-3 kz-mb-16">Throttle &amp; Fault Events</h2>
-          <div id="throttle-events-list">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-
-        <!-- Board Thermal -->
-        <div class="kz-chart-wrap kz-mb-32">
-          <h2 class="kz-heading-3 kz-chart-wrap__title">Board Thermal</h2>
-          <div class="kz-chart-canvas-wrap">
-            <canvas id="thermal-chart" aria-label="Bar chart showing board thermal zone temperatures" role="img"></canvas>
-          </div>
-          <div class="kz-table-container kz-mt-16">
-            <table class="kz-table kz-table--data" id="thermal-table" aria-label="Board thermal sensor data">
-              <thead>
-                <tr class="kz-table-header">
-                  <th class="kz-table-header-cell" scope="col">Sensor</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Mean (&deg;C)</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Max (&deg;C)</th>
-                </tr>
-              </thead>
-              <tbody id="thermal-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Memory Profile -->
-        <div class="kz-chart-wrap kz-mb-32">
-          <h2 class="kz-heading-3 kz-chart-wrap__title">Memory Profile</h2>
-          <div class="kz-chart-canvas-wrap">
-            <canvas id="memory-chart" aria-label="Bar chart showing memory usage breakdown" role="img"></canvas>
-          </div>
-          <div class="kz-table-container kz-mt-16">
-            <table class="kz-table kz-table--data" id="memory-table" aria-label="Memory profile data">
-              <thead>
-                <tr class="kz-table-header">
-                  <th class="kz-table-header-cell" scope="col">Metric</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Mean</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Max</th>
-                </tr>
-              </thead>
-              <tbody id="memory-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- PSI (Pressure Stall Information) -->
-        <div class="kz-well kz-well--blue kz-mb-32" id="psi-panel">
-          <h2 class="kz-heading-3 kz-mb-16">Pressure Stall Information (PSI)</h2>
-          <div id="psi-list">
-            <!-- Populated by JS -->
-          </div>
-        </div>
-
-        <!-- System Stats + PCIe -->
-        <div class="kz-grid kz-grid--2 kz-grid--gap-16 kz-mb-32">
-          <div class="kz-chart-wrap">
-            <h2 class="kz-heading-3 kz-chart-wrap__title">System</h2>
-            <div class="kz-table-container">
-              <table class="kz-table kz-table--data" id="system-table" aria-label="System metrics">
-                <thead>
-                  <tr class="kz-table-header">
-                    <th class="kz-table-header-cell" scope="col">Metric</th>
-                    <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Mean</th>
-                    <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Max</th>
-                  </tr>
-                </thead>
-                <tbody id="system-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="kz-well kz-well--purple" id="pcie-panel">
-            <h2 class="kz-heading-3 kz-mb-16">PCIe Link</h2>
-            <div id="pcie-details">
-              <!-- Populated by JS -->
-            </div>
-          </div>
-        </div>
-
-        <!-- Per-Run Sensor Highlights -->
-        <div class="kz-chart-wrap kz-chart-wrap--elevated kz-mb-32">
-          <h2 class="kz-heading-3 kz-chart-wrap__title">Per-Run Sensor Highlights</h2>
-          <div class="kz-table-container">
-            <table class="kz-table kz-table--data" id="per-run-table" aria-label="Per-run sensor highlights">
-              <thead>
-                <tr class="kz-table-header">
-                  <th class="kz-table-header-cell" scope="col">Run</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Samples</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Duration</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">GPU avg W</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">GPU max &deg;C</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">GPU max %</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Load avg</th>
-                  <th class="kz-table-header-cell kz-table-header-cell--right" scope="col">Mem max GB</th>
-                </tr>
-              </thead>
-              <tbody id="per-run-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- ================================================================== -->
-  <!-- Page 4: Carbon Calculator ("What If")                              -->
-  <!-- ================================================================== -->
-  <div class="kz-page" id="page-calculator" role="region" aria-label="Carbon Calculator">
-    <section class="kz-section--sm">
-      <div class="kz-container">
-        <h1 class="kz-heading-1 kz-mb-8">Carbon Calculator</h1>
-        <p class="kz-intro-lede kz-text--muted kz-mb-32">
-          Same model, same hardware &mdash; different carbon cost based on where you run it.
-          Explore how grid carbon intensity changes the SCI score.
-        </p>
-
-        <div class="kz-calculator">
-          <!-- Controls -->
-          <div class="kz-calculator__controls">
-            <div class="kz-card kz-card--white">
-              <h3 class="kz-heading-4 kz-mb-16">Select Experiment</h3>
-              <label for="calc-experiment" class="kz-sr-only">Experiment configuration</label>
-              <select class="kz-select kz-select--full" id="calc-experiment">
-                <!-- Populated by JS -->
-              </select>
-            </div>
-
-            <div class="kz-card kz-card--white">
-              <h3 class="kz-heading-4 kz-mb-16">Grid Region</h3>
-              <label for="calc-region" class="kz-sr-only">Grid region</label>
-              <select class="kz-select kz-select--full" id="calc-region">
-                <!-- Populated by JS -->
-              </select>
-              <div class="kz-mt-16">
-                <span class="kz-small kz-text--muted">Carbon Intensity:</span>
-                <span class="kz-data-small" id="calc-intensity-value" aria-live="polite">--</span>
-                <span class="kz-small kz-text--muted">gCO2/kWh</span>
-              </div>
-            </div>
-
-            <div class="kz-well kz-well--green" aria-live="polite">
-              <h3 class="kz-heading-4 kz-mb-8">Recalculated SCI</h3>
-              <div class="kz-data-medium" id="calc-sci-result">--</div>
-              <span class="kz-small kz-text--muted">gCO2 per token</span>
-              <div class="kz-mt-16 kz-flex kz-flex--gap-16">
-                <div>
-                  <div class="kz-extra-small kz-text--muted">Operational</div>
-                  <div class="kz-text--bold" id="calc-operational">--</div>
-                </div>
-                <div>
-                  <div class="kz-extra-small kz-text--muted">Embodied</div>
-                  <div class="kz-text--bold" id="calc-embodied">--</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Chart -->
-          <div class="kz-calculator__result">
-            <div class="kz-chart-wrap">
-              <h3 class="kz-heading-4 kz-chart-wrap__title">SCI by Region</h3>
-              <div class="kz-chart-canvas-wrap kz-chart-canvas-wrap--tall">
-                <canvas id="region-chart" aria-label="Horizontal bar chart comparing SCI carbon scores across grid regions worldwide" role="img"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- ================================================================== -->
-  <!-- Page 4: Methodology                                                -->
-  <!-- ================================================================== -->
-  <div class="kz-page" id="page-methodology" role="region" aria-label="Methodology">
-    <section class="kz-section--sm">
-      <div class="kz-container">
-        <h1 class="kz-heading-1 kz-mb-8">Methodology</h1>
-        <p class="kz-intro-lede kz-text--muted kz-mb-32">
-          How we measure the environmental impact of LLM inference. Transparent, reproducible, ISO-standard.
-        </p>
-
-        <!-- SCI Formula -->
-        <div class="kz-well kz-well--purple kz-mb-32">
-          <h2 class="kz-heading-3 kz-mb-16">The SCI Formula</h2>
-          <div class="kz-formula" role="math" aria-label="SCI equals E times I plus M, per R">SCI = (E &times; I) + M &nbsp;&nbsp; per R</div>
-          <div class="kz-grid kz-grid--2 kz-mt-24 kz-grid--gap-16">
-            <div>
-              <div class="kz-text--bold">E &mdash; Energy</div>
-              <p class="kz-small kz-text--muted">
-                Energy per token in kWh. Measured via nvidia-smi power sampling at 1 Hz,
-                integrated with the trapezoidal rule.
-              </p>
-            </div>
-            <div>
-              <div class="kz-text--bold">I &mdash; Carbon Intensity</div>
-              <p class="kz-small kz-text--muted">
-                Grid carbon intensity in gCO2/kWh. Default: Connecticut / ISO New England (~210 gCO2/kWh).
-                Supports Electricity Maps API for real-time data.
-              </p>
-            </div>
-            <div>
-              <div class="kz-text--bold">M &mdash; Embodied Emissions</div>
-              <p class="kz-small kz-text--muted">
-                Manufacturing CO2 of the DGX Spark (~200 kg), amortized over a 5-year lifespan
-                at average utilization, per functional unit.
-              </p>
-            </div>
-            <div>
-              <div class="kz-text--bold">R &mdash; Functional Unit</div>
-              <p class="kz-small kz-text--muted">
-                Per token generated. This makes SCI comparable across batch sizes
-                and sequence lengths.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Methodology Cards -->
-        <div class="kz-methodology-grid">
-
-          <div class="kz-well kz-well--blue">
-            <h3 class="kz-heading-4 kz-mb-8">Hardware</h3>
-            <p class="kz-small">
-              <strong>NVIDIA DGX Spark</strong><br />
-              Blackwell GB10 GPU &bull; ARM Cortex-X925 / A725 big.LITTLE CPU &bull;
-              128 GB unified LPDDR5X (C2C) &bull; 1 TB NVMe
-            </p>
-          </div>
-
-          <div class="kz-well kz-well--blue">
-            <h3 class="kz-heading-4 kz-mb-8">Power Measurement</h3>
-            <p class="kz-small">
-              nvidia-smi sampled at 1 Hz (instantaneous + running average).
-              Total energy computed via trapezoidal integration over the experiment duration.
-              Sensor logger captures GPU temp, clocks, fan RPM, and NVMe temp at 1 s intervals.
-            </p>
-          </div>
-
-          <div class="kz-well kz-well--blue">
-            <h3 class="kz-heading-4 kz-mb-8">Quality Metric</h3>
-            <p class="kz-small">
-              <strong>Validation bits-per-byte (BPB)</strong> on a held-out text dataset.
-              Lower BPB = better language modeling quality.
-              This is a standard compression-based metric used by scaling-law research.
-            </p>
-          </div>
-
-          <div class="kz-well kz-well--blue">
-            <h3 class="kz-heading-4 kz-mb-8">Search Strategy</h3>
-            <p class="kz-small">
-              Grid search &rarr; Random &rarr; Bayesian optimization (Optuna).
-              The workbench auto-switches strategies based on convergence.
-              Pareto frontier updated after each experiment.
-            </p>
-          </div>
-
-          <div class="kz-well kz-well--yellow">
-            <h3 class="kz-heading-4 kz-mb-8">Thermal Safety</h3>
-            <p class="kz-small">
-              85 &deg;C GPU abort threshold. Cooldown gating between experiments ensures
-              thermal state doesn't bias power measurements. Thermal throttling is flagged in results.
-            </p>
-          </div>
-
-          <div class="kz-well kz-well--yellow">
-            <h3 class="kz-heading-4 kz-mb-8">Limitations</h3>
-            <p class="kz-small">
-              GPU power only (not full system draw). Embodied emissions estimated &mdash;
-              NVIDIA has not published a GB10 lifecycle assessment. Grid intensity is static
-              unless an Electricity Maps API key is configured.
-            </p>
-          </div>
-
-        </div>
-
-        <!-- Standard Reference -->
-        <div class="kz-card kz-card--gray kz-mt-32">
-          <div class="kz-flex kz-flex--center kz-flex--gap-16">
-            <span class="kz-badge kz-badge--green kz-badge--lg">ISO/IEC 21031:2024</span>
-            <div>
-              <div class="kz-text--bold">Green Software Foundation &mdash; Software Carbon Intensity</div>
-              <p class="kz-small kz-text--muted">
-                The SCI specification is an ISO standard for measuring the carbon emissions of software systems.
-                Our implementation follows the spec for per-request functional units in inference workloads.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  </main><!-- /main-content -->
-
-  <!-- ================================================================== -->
-  <!-- Experiment Detail Modal                                            -->
-  <!-- ================================================================== -->
-  <div class="kz-modal-overlay" id="detail-modal" aria-hidden="true">
-    <div class="kz-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-      <button class="kz-modal__close" id="modal-close" aria-label="Close detail view">&times;</button>
-      <div class="kz-modal__header">
-        <h2 class="kz-heading-2" id="modal-title">Experiment Detail</h2>
-        <div class="kz-config-tags kz-mt-8" id="modal-config-tags"></div>
-      </div>
-
-      <!-- Metrics Grid -->
-      <div class="kz-metrics-grid" id="modal-metrics"></div>
-
-      <!-- SCI Breakdown Chart -->
-      <div class="kz-mt-24">
-        <h3 class="kz-heading-4 kz-mb-16">SCI Breakdown</h3>
-        <div class="kz-grid kz-grid--2">
-          <div class="kz-pie-wrap">
-            <canvas id="modal-pie-chart" aria-label="Doughnut chart showing operational vs embodied carbon split" role="img"></canvas>
-          </div>
-          <div id="modal-sci-details"></div>
+        <div class="mta-subway-line" style="background: var(--mta-red)">
+          <span class="mta-station-dot"></span><span class="mta-station-dot"></span>
+          <span class="mta-station-dot"></span>
         </div>
       </div>
 
-      <!-- Latency Chart -->
-      <div class="kz-mt-24">
-        <h3 class="kz-heading-4 kz-mb-16">Latency Distribution</h3>
-        <div class="kz-latency-wrap">
-          <canvas id="modal-latency-chart" aria-label="Bar chart showing P50, P95, and P99 latency percentiles in milliseconds" role="img"></canvas>
+      <!-- Stats -->
+      <div class="mta-stats" id="stats-bar" aria-label="Key statistics"></div>
+    </div>
+    <div class="mta-hero__bleed" aria-hidden="true">BENCH</div>
+  </section>
+
+  <!-- Pareto Chart -->
+  <section class="mta-section" aria-labelledby="pareto-heading">
+    <div class="mta-container">
+      <div class="mta-chart-card">
+        <div class="flex flex--between flex--center flex--wrap flex--gap-16">
+          <div>
+            <h2 class="t-h2" id="pareto-heading">Pareto Frontier: Quality vs Carbon</h2>
+            <p class="t-small t-muted mt-8">Each dot is a station on the line. The frontier connects Pareto-optimal configs.</p>
+          </div>
+        </div>
+        <div class="mta-legend" id="pareto-legend" aria-label="Chart legend"></div>
+        <div class="mta-chart-canvas"><canvas id="pareto-chart" role="img" aria-label="Pareto frontier scatter plot"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Top 5 Preview -->
+  <section class="mta-section--sm" aria-labelledby="preview-heading">
+    <div class="mta-container">
+      <div class="flex flex--between flex--center mb-24">
+        <h2 class="t-h2" id="preview-heading">Top 5 Greenest Configs</h2>
+        <button class="mta-btn mta-btn--secondary mta-btn--sm" data-nav="leaderboards">View All →</button>
+      </div>
+      <div class="mta-table-wrap">
+        <table class="mta-table" id="preview-table" aria-label="Top 5 greenest configs">
+          <thead>
+            <tr>
+              <th class="--center" scope="col">#</th>
+              <th scope="col">Model</th>
+              <th scope="col">Quant</th>
+              <th class="--right" scope="col">Batch</th>
+              <th class="--right" scope="col">SCI (µgCO₂/tok)</th>
+              <th class="--right" scope="col">BPB</th>
+              <th class="--right" scope="col">tok/s</th>
+              <th class="--center" scope="col">Pareto</th>
+            </tr>
+          </thead>
+          <tbody id="preview-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===== Page 2: Leaderboards ===== -->
+<div class="mta-page" id="page-leaderboards" role="region" aria-label="Leaderboards">
+  <section class="mta-section--sm">
+    <div class="mta-container">
+      <h1 class="t-h1 mb-24">Leaderboards</h1>
+      <div class="mta-tabs" id="leaderboard-tabs" role="tablist" aria-label="Leaderboard categories">
+        <button class="mta-tab is-selected" data-board="greenest" role="tab" aria-selected="true" id="tab-greenest">🟢 Greenest</button>
+        <button class="mta-tab" data-board="efficient" role="tab" aria-selected="false" id="tab-efficient">⚡ Efficient</button>
+        <button class="mta-tab" data-board="perfwatt" role="tab" aria-selected="false" id="tab-perfwatt">🔵 Perf/Watt</button>
+        <button class="mta-tab" data-board="quality" role="tab" aria-selected="false" id="tab-quality">🟣 Quality</button>
+        <button class="mta-tab" data-board="fastest" role="tab" aria-selected="false" id="tab-fastest">🔴 Fastest</button>
+        <button class="mta-tab" data-board="cheapest" role="tab" aria-selected="false" id="tab-cheapest">🟡 Cheapest</button>
+      </div>
+      <div class="mta-filters mt-24">
+        <label for="filter-model">Model:</label>
+        <select class="mta-select" id="filter-model"><option value="all">All Models</option></select>
+        <label for="filter-quant">Quant:</label>
+        <select class="mta-select" id="filter-quant"><option value="all">All</option></select>
+        <label for="filter-batch">Batch:</label>
+        <select class="mta-select" id="filter-batch"><option value="all">All</option></select>
+      </div>
+      <div class="mta-table-wrap mt-16" id="leaderboard-panel" role="tabpanel" aria-labelledby="tab-greenest">
+        <table class="mta-table" id="leaderboard-table" aria-label="Leaderboard results">
+          <thead id="leaderboard-thead"></thead>
+          <tbody id="leaderboard-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===== Page 3: Calculator ===== -->
+<div class="mta-page" id="page-calculator" role="region" aria-label="Carbon Calculator">
+  <section class="mta-section--sm">
+    <div class="mta-container">
+      <h1 class="t-h1 mb-8">Carbon Calculator</h1>
+      <p class="t-body t-muted mb-32" style="max-width:600px">
+        Same model, same hardware — different carbon cost based on where you run it.
+      </p>
+      <div class="mta-calc">
+        <div class="mta-calc__controls">
+          <div class="mta-card">
+            <h3 class="t-h4 mb-16">Select Experiment</h3>
+            <label for="calc-experiment" class="sr-only">Experiment</label>
+            <select class="mta-select mta-select--full" id="calc-experiment"></select>
+          </div>
+          <div class="mta-card">
+            <h3 class="t-h4 mb-16">Grid Region</h3>
+            <label for="calc-region" class="sr-only">Region</label>
+            <select class="mta-select mta-select--full" id="calc-region"></select>
+            <div class="mt-16">
+              <span class="t-small t-muted">Carbon Intensity:</span>
+              <span class="t-bold" id="calc-intensity-value" aria-live="polite">--</span>
+              <span class="t-small t-muted">gCO₂/kWh</span>
+            </div>
+          </div>
+          <div class="mta-well mta-well--green mb-0" aria-live="polite">
+            <h3 class="t-h4 mb-8">Recalculated SCI</h3>
+            <div style="font-size:28px;font-weight:700" id="calc-sci-result">--</div>
+            <span class="t-small t-muted">gCO₂ per token</span>
+            <div class="mt-16 flex flex--gap-16">
+              <div><div class="t-xs t-muted">Operational</div><div class="t-bold" id="calc-operational">--</div></div>
+              <div><div class="t-xs t-muted">Embodied</div><div class="t-bold" id="calc-embodied">--</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="mta-chart-card">
+          <h3 class="t-h4 mb-16">SCI by Region</h3>
+          <div class="mta-chart-canvas mta-chart-canvas--tall"><canvas id="region-chart" role="img" aria-label="SCI comparison by region"></canvas></div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
+</div>
 
-  <!-- ================================================================== -->
-  <!-- Footer                                                             -->
-  <!-- ================================================================== -->
-  <footer class="kz-footer">
-    <div class="kz-footer__inner">
-      <div>
-        <div class="kz-heading-5 kz-footer__brand">Green LLM Bench</div>
-        <p class="kz-small kz-mt-8">
-          Built at YHack &bull; Yale's Hackathon &bull; ASUS Sustainability Track
-        </p>
+<!-- ===== Page 4: Methodology ===== -->
+<div class="mta-page" id="page-methodology" role="region" aria-label="Methodology">
+  <section class="mta-section--sm">
+    <div class="mta-container">
+      <h1 class="t-h1 mb-8">Methodology</h1>
+      <p class="t-body t-muted mb-32" style="max-width:600px">
+        How we measure environmental impact. Transparent, reproducible, ISO-standard.
+      </p>
+      <div class="mta-well mta-well--purple mb-32">
+        <h2 class="t-h3 mb-16">The SCI Formula</h2>
+        <div class="mta-formula" role="math" aria-label="SCI equals E times I plus M per R">SCI = (E × I) + M &nbsp; per R</div>
+        <div class="mta-grid-2 mt-24" style="gap:var(--s16)">
+          <div><div class="t-bold">E — Energy</div><p class="t-small t-muted">Energy per token in kWh. nvidia-smi at 1 Hz, trapezoidal integration.</p></div>
+          <div><div class="t-bold">I — Carbon Intensity</div><p class="t-small t-muted">Grid carbon in gCO₂/kWh. Default: Connecticut / ISO-NE (~210).</p></div>
+          <div><div class="t-bold">M — Embodied</div><p class="t-small t-muted">DGX Spark manufacturing (~200 kg), amortized over 5 years.</p></div>
+          <div><div class="t-bold">R — Functional Unit</div><p class="t-small t-muted">Per token generated. Comparable across batch sizes.</p></div>
+        </div>
       </div>
-      <div>
-        <p class="kz-small">
-          Powered by <strong class="kz-footer__highlight">NVIDIA DGX Spark</strong><br />
-          SCI Standard: ISO/IEC 21031:2024
-        </p>
+      <div class="mta-method-grid">
+        <div class="mta-well mta-well--blue"><h3 class="t-h4 mb-8">Hardware</h3><p class="t-small"><strong>NVIDIA DGX Spark</strong> — Blackwell GB10 · ARM big.LITTLE · 128 GB LPDDR5X · 1 TB NVMe</p></div>
+        <div class="mta-well mta-well--blue"><h3 class="t-h4 mb-8">Power Measurement</h3><p class="t-small">nvidia-smi at 1 Hz. Trapezoidal integration. GPU temp, clocks, fan RPM logged.</p></div>
+        <div class="mta-well mta-well--blue"><h3 class="t-h4 mb-8">Quality Metric</h3><p class="t-small"><strong>Validation BPB</strong> on held-out text. Lower = better compression quality.</p></div>
+        <div class="mta-well mta-well--blue"><h3 class="t-h4 mb-8">Search Strategy</h3><p class="t-small">Grid → Random → Bayesian (Optuna). Auto-switches on convergence.</p></div>
+        <div class="mta-well mta-well--yellow"><h3 class="t-h4 mb-8">Thermal Safety</h3><p class="t-small">85°C abort. Cooldown gating between experiments. Throttling flagged.</p></div>
+        <div class="mta-well mta-well--yellow"><h3 class="t-h4 mb-8">Limitations</h3><p class="t-small">GPU power only. Embodied emissions estimated. Grid intensity is static.</p></div>
       </div>
-      <div>
-        <p class="kz-small">
-          Design: <a href="https://github.com/cultureamp/kaizen-design-system">Kaizen Design System</a>
-        </p>
+      <div class="mta-card mt-32">
+        <div class="flex flex--center flex--gap-16">
+          <span class="mta-badge mta-badge--green mta-badge--lg">ISO/IEC 21031:2024</span>
+          <div>
+            <div class="t-bold">Green Software Foundation — SCI</div>
+            <p class="t-small t-muted">ISO standard for measuring software carbon emissions. Per-request functional units.</p>
+          </div>
+        </div>
       </div>
     </div>
-  </footer>
+  </section>
+</div>
 
-  <!-- App Script -->
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+</main>
+
+<!-- ===== Modal ===== -->
+<div class="mta-modal-overlay" id="detail-modal" aria-hidden="true">
+  <div class="mta-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button class="mta-modal__close" id="modal-close" aria-label="Close">&times;</button>
+    <div class="mta-modal__header">
+      <h2 class="t-h2" id="modal-title">Experiment Detail</h2>
+      <div class="mta-config-tags mt-8" id="modal-config-tags"></div>
+    </div>
+    <div class="mta-metrics-grid" id="modal-metrics"></div>
+    <div class="mt-24">
+      <h3 class="t-h4 mb-16">SCI Breakdown</h3>
+      <div class="mta-grid-2">
+        <div class="mta-pie-wrap"><canvas id="modal-pie-chart" role="img" aria-label="Carbon split"></canvas></div>
+        <div id="modal-sci-details"></div>
+      </div>
+    </div>
+    <div class="mt-24">
+      <h3 class="t-h4 mb-16">Latency Distribution</h3>
+      <div class="mta-latency-wrap"><canvas id="modal-latency-chart" role="img" aria-label="Latency percentiles"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Footer (MetroCard) ===== -->
+<footer class="mta-footer">
+  <div class="mta-footer__stripe"></div>
+  <div class="mta-footer__inner">
+    <div>
+      <div class="mta-footer__brand">Green LLM Bench</div>
+      <p class="t-small mt-8">Built at YHack &bull; Yale's Hackathon &bull; ASUS Sustainability</p>
+    </div>
+    <div>
+      <p class="t-small">Powered by <strong style="color:#fff">NVIDIA DGX Spark</strong><br>SCI Standard: ISO/IEC 21031:2024</p>
+    </div>
+    <div>
+      <p class="t-small">Design: MTA-inspired signage system<br>
+        <a href="https://github.com/cultureamp/kaizen-design-system">Open Source</a></p>
+    </div>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

@@ -1,173 +1,103 @@
 /* ==========================================================================
-   Green LLM Bench — Rendering, Charts & Interactivity
-   Requires data.js (BENCHMARK_DATA, CARBON_PRESETS) to be loaded first.
-   Uses Chart.js for visualizations, vanilla JS for everything else.
+   Green LLM Bench — MTA-Themed Rendering & Interactivity
+   Models = Subway Lines | Configs = Stations | Metrics = Departures
+   Requires: data.js (BENCHMARK_DATA, CARBON_PRESETS), Chart.js
    ========================================================================== */
 
-// ─── Read Chart Colors from CSS Custom Properties ─────────────────────────────
-function getCSSColor(prop) {
-  return getComputedStyle(document.documentElement).getPropertyValue(prop).trim();
+// ─── MTA Color Palette ─────────────────────────────────────────────────────────
+const MTA = {
+  red: "#EE352E", green: "#00933C", yellow: "#FCCC0A", blue: "#0039A6",
+  orange: "#FF6319", purple: "#B933AD", gray: "#808183", lime: "#6CBE45",
+  black: "#000000", white: "#FFFFFF"
+};
+
+// Model → Subway Line mapping
+const MODEL_LINES = {
+  "Qwen3.5-0.8B": { bg: MTA.green, border: "#006B2B", circle: "green", letter: "1", label: "Line 1 (0.8B)" },
+  "Qwen3.5-4B":   { bg: MTA.yellow, border: "#D4AB00", circle: "yellow", letter: "4", label: "Line 4 (4B)" },
+  "Qwen3.5-9B":   { bg: MTA.red, border: "#C42B25", circle: "red", letter: "9", label: "Line 9 (9B)" }
+};
+
+function getModelLine(modelName) {
+  const short = shortModel(modelName);
+  return MODEL_LINES[short] || { bg: MTA.gray, border: "#666", circle: "gray", letter: "?", label: short };
 }
 
-function getChartColors() {
-  return {
-    quantNoneBg: getCSSColor("--chart-quant-none-bg"),
-    quantNoneBorder: getCSSColor("--chart-quant-none-border"),
-    quantGptq4Bg: getCSSColor("--chart-quant-gptq4-bg"),
-    quantGptq4Border: getCSSColor("--chart-quant-gptq4-border"),
-    quantGptq8Bg: getCSSColor("--chart-quant-gptq8-bg"),
-    quantGptq8Border: getCSSColor("--chart-quant-gptq8-border"),
-    quantAwq4Bg: getCSSColor("--chart-quant-awq4-bg"),
-    quantAwq4Border: getCSSColor("--chart-quant-awq4-border"),
-    quantAwq8Bg: getCSSColor("--chart-quant-awq8-bg"),
-    quantAwq8Border: getCSSColor("--chart-quant-awq8-border"),
-    paretoLine: getCSSColor("--chart-pareto-line"),
-    paretoLineAccent: getCSSColor("--chart-pareto-line-accent"),
-    tooltipBg: getCSSColor("--chart-tooltip-bg"),
-    tooltipText: getCSSColor("--chart-tooltip-text"),
-    operational: getCSSColor("--chart-operational"),
-    embodied: getCSSColor("--chart-embodied"),
-    barPrimary: getCSSColor("--chart-bar-primary"),
-    barSecondary: getCSSColor("--chart-bar-secondary"),
-    barTertiary: getCSSColor("--chart-bar-tertiary"),
-    barMuted: getCSSColor("--chart-bar-muted"),
-  };
-}
-
-// Quantization color map — reads from CSS tokens
-function getQuantColors() {
-  const c = getChartColors();
-  return {
-    "none":      { bg: c.quantNoneBg, border: c.quantNoneBorder },
-    "gptq-4bit": { bg: c.quantGptq4Bg, border: c.quantGptq4Border },
-    "gptq-8bit": { bg: c.quantGptq8Bg, border: c.quantGptq8Border },
-    "awq-4bit":  { bg: c.quantAwq4Bg, border: c.quantAwq4Border },
-    "awq-8bit":  { bg: c.quantAwq8Bg, border: c.quantAwq8Border }
-  };
-}
-
-// ─── Animation Helpers ───────────────────────────────────────────────────────
+// ─── Animation Helpers ──────────────────────────────────────────────────────────
 function animateCountUp(el, target, duration = 600, suffix = "") {
-  const start = 0;
   const startTime = performance.now();
   function tick(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
+    const progress = Math.min((now - startTime) / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3);
-    const current = start + (target - start) * eased;
+    const current = target * eased;
     el.textContent = (Number.isInteger(target) ? Math.round(current) : current.toFixed(target < 10 ? 2 : 1)) + suffix;
     if (progress < 1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
 }
 
-function staggerRows(container, selector, delayStep = 30) {
-  const rows = container.querySelectorAll(selector);
-  rows.forEach((row, i) => {
-    row.classList.add("kz-table-row--stagger");
+function staggerRows(container, selector, delayStep = 25) {
+  container.querySelectorAll(selector).forEach((row, i) => {
+    row.classList.add("mta-stagger");
     row.style.animationDelay = `${i * delayStep}ms`;
   });
 }
 
 function flashElement(el) {
-  el.classList.remove("kz-result-flash");
-  void el.offsetWidth; // force reflow
-  el.classList.add("kz-result-flash");
+  el.classList.remove("mta-flash");
+  void el.offsetWidth;
+  el.classList.add("mta-flash");
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function shortModel(name) {
-  return name.split("/").pop();
-}
+// ─── Helpers ────────────────────────────────────────────────────────────────────
+function shortModel(name) { return name.split("/").pop(); }
 
 function fmtNum(v, digits = 2) {
-  if (v === null || v === undefined) return "--";
+  if (v == null) return "--";
   if (Math.abs(v) < 0.001 && v !== 0) return v.toExponential(digits);
   return v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: digits });
 }
 
-function completedData() {
-  return BENCHMARK_DATA.filter(d => d.status === "completed");
-}
+function completedData() { return BENCHMARK_DATA.filter(d => d.status === "completed"); }
 
-// Quantization → tag CSS class (color-coded by type)
-function quantTagClass(quant) {
-  const map = {
-    "none": "kz-tag--quant-none",
-    "gptq-4bit": "kz-tag--quant-gptq4",
-    "gptq-8bit": "kz-tag--quant-gptq8",
-    "awq-4bit": "kz-tag--quant-awq4",
-    "awq-8bit": "kz-tag--quant-awq8"
-  };
-  return map[quant] || "kz-tag--informative";
-}
+function quantLabel(q) { return q === "none" ? "FP16" : q.toUpperCase(); }
 
-function quantLabel(quant) {
-  return quant === "none" ? "FP16" : quant.toUpperCase();
-}
-
-// Semantic color class based on SCI score (lower = better)
 function sciScoreClass(sci) {
   const ug = sci * 1e6;
-  if (ug <= 60) return "kz-score--good";
-  if (ug <= 200) return "kz-score--ok";
-  return "kz-score--bad";
+  return ug <= 60 ? "score--good" : ug <= 200 ? "score--ok" : "score--bad";
+}
+function energyScoreClass(j) { return j <= 0.3 ? "score--good" : j <= 1.0 ? "score--ok" : "score--bad"; }
+
+// Model circle badge HTML
+function modelBadge(modelName, size = "sm") {
+  const ml = getModelLine(modelName);
+  return `<span class="mta-circle mta-circle--${size} mta-circle--${ml.circle}">${ml.letter}</span>`;
 }
 
-// Semantic color class for energy/joules (lower = better)
-function energyScoreClass(j) {
-  if (j <= 0.3) return "kz-score--good";
-  if (j <= 1.0) return "kz-score--ok";
-  return "kz-score--bad";
-}
-
-// Semantic color class for temperature
-function tempScoreClass(temp) {
-  if (temp <= 55) return "kz-score--good";
-  if (temp <= 70) return "kz-score--ok";
-  return "kz-score--bad";
-}
-
-// ─── Navigation ───────────────────────────────────────────────────────────────
+// ─── Navigation ─────────────────────────────────────────────────────────────────
 const pages = {
   dashboard: document.getElementById("page-dashboard"),
   leaderboards: document.getElementById("page-leaderboards"),
-  hardware: document.getElementById("page-hardware"),
   calculator: document.getElementById("page-calculator"),
   methodology: document.getElementById("page-methodology")
 };
-
-// Track which pages have been initialized (lazy chart init)
-const pageInitialized = { dashboard: false, leaderboards: false, hardware: false, calculator: false, methodology: true };
+const pageInitialized = { dashboard: false, leaderboards: false, calculator: false, methodology: true };
 
 function navigate(page) {
   Object.values(pages).forEach(p => p.classList.remove("is-active"));
   if (pages[page]) pages[page].classList.add("is-active");
-
-  document.querySelectorAll(".kz-nav__link").forEach(link => {
+  document.querySelectorAll(".mta-nav__link").forEach(link => {
     const isActive = link.dataset.nav === page;
     link.classList.toggle("is-active", isActive);
-    if (isActive) {
-      link.setAttribute("aria-current", "page");
-    } else {
-      link.removeAttribute("aria-current");
-    }
+    isActive ? link.setAttribute("aria-current", "page") : link.removeAttribute("aria-current");
   });
-
-  // Lazy initialize page content
-  if (!pageInitialized[page]) {
-    pageInitialized[page] = true;
-    if (page === "calculator") initCalculator();
-    if (page === "hardware") initHardwarePage();
-  }
-
+  if (!pageInitialized[page]) { pageInitialized[page] = true; if (page === "calculator") initCalculator(); }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 document.querySelectorAll("[data-nav]").forEach(el => {
   el.addEventListener("click", e => {
-    e.preventDefault();
-    navigate(el.dataset.nav);
+    e.preventDefault(); navigate(el.dataset.nav);
     document.getElementById("nav-links").classList.remove("is-open");
     document.getElementById("nav-toggle").setAttribute("aria-expanded", "false");
   });
@@ -180,130 +110,92 @@ navToggle.addEventListener("click", () => {
   navToggle.setAttribute("aria-expanded", String(isOpen));
 });
 
-// ─── Stats Bar ────────────────────────────────────────────────────────────────
+// ─── Stats Bar ──────────────────────────────────────────────────────────────────
 function renderStatsBar() {
   const data = completedData();
   const bestSCI = Math.min(...data.map(d => d.metrics.sci_per_token));
-  const bestEfficiency = Math.max(...data.map(d => d.metrics.gpu_efficiency));
-
+  const bestEff = Math.max(...data.map(d => d.metrics.gpu_efficiency));
   const stats = [
-    { label: "Experiments Run", value: data.length, unit: "", numericTarget: data.length, suffix: "", semantic: "count" },
-    { label: "Best SCI Score", value: (bestSCI * 1e6).toFixed(1), unit: "\u00B5gCO2/tok", numericTarget: bestSCI * 1e6, suffix: "", semantic: "sci" },
-    { label: "Best Efficiency", value: bestEfficiency.toFixed(2), unit: "tok/J", numericTarget: bestEfficiency, suffix: "", semantic: "efficiency" },
-    { label: "Grid Region", value: "CT", unit: "ISO-NE", semantic: "region" }
+    { label: "Experiments", value: data.length, unit: "", cls: "count", target: data.length },
+    { label: "Best SCI", value: (bestSCI * 1e6).toFixed(1), unit: "µgCO₂/tok", cls: "sci", target: bestSCI * 1e6 },
+    { label: "Best Efficiency", value: bestEff.toFixed(2), unit: "tok/J", cls: "eff", target: bestEff },
+    { label: "Grid Region", value: "CT", unit: "ISO-NE", cls: "region" }
   ];
-
   const bar = document.getElementById("stats-bar");
   bar.innerHTML = stats.map(s => `
-    <div class="kz-stat-tile${s.semantic ? " kz-stat-tile--" + s.semantic : ""}">
-      <div class="kz-stat-tile__label">${s.label}</div>
-      <div>
-        <span class="kz-stat-tile__value" data-target="${s.numericTarget !== undefined ? s.numericTarget : ""}" data-suffix="${s.suffix || ""}">${s.value}</span>
-        <span class="kz-stat-tile__unit">${s.unit}</span>
-      </div>
-    </div>
-  `).join("");
-
-  // Animate numeric values
-  bar.querySelectorAll(".kz-stat-tile__value[data-target]").forEach(el => {
-    const target = parseFloat(el.dataset.target);
-    if (!isNaN(target) && target > 0) {
-      animateCountUp(el, target, 800, el.dataset.suffix);
-    }
+    <div class="mta-stat mta-stat--${s.cls}">
+      <div class="mta-stat__label">${s.label}</div>
+      <div><span class="mta-stat__value" data-target="${s.target || ""}">${s.value}</span>
+      <span class="mta-stat__unit">${s.unit}</span></div>
+    </div>`).join("");
+  bar.querySelectorAll(".mta-stat__value[data-target]").forEach(el => {
+    const t = parseFloat(el.dataset.target);
+    if (!isNaN(t) && t > 0) animateCountUp(el, t, 800);
   });
 }
 
-// ─── Pareto Chart ─────────────────────────────────────────────────────────────
+// ─── Pareto Chart (Models = Subway Lines) ───────────────────────────────────────
 let paretoChart = null;
 
 function renderParetoChart() {
   const data = completedData();
   const ctx = document.getElementById("pareto-chart").getContext("2d");
-  const quantColors = getQuantColors();
-  const cc = getChartColors();
 
-  const quants = [...new Set(data.map(d => d.config.quantization))];
-  const datasets = quants.map(q => {
-    const points = data.filter(d => d.config.quantization === q);
-    const colors = quantColors[q] || { bg: getCSSColor("--color-gray-500"), border: getCSSColor("--color-gray-600") };
+  // Group by model (subway line) instead of quantization
+  const models = [...new Set(data.map(d => shortModel(d.config.model_name)))];
+  const datasets = models.map(model => {
+    const points = data.filter(d => shortModel(d.config.model_name) === model);
+    const ml = MODEL_LINES[model] || { bg: MTA.gray, border: "#666" };
     return {
-      label: q === "none" ? "No Quantization" : q.toUpperCase(),
+      label: ml.label || model,
       data: points.map(p => ({
-        x: p.metrics.val_bpb,
-        y: p.metrics.sci_per_token * 1e6,
-        r: Math.max(4, Math.min(20, p.metrics.tokens_per_sec / 10)),
-        _raw: p
+        x: p.metrics.val_bpb, y: p.metrics.sci_per_token * 1e6,
+        r: Math.max(5, Math.min(18, p.metrics.tokens_per_sec / 12)), _raw: p
       })),
-      backgroundColor: colors.bg + "BB",
-      borderColor: colors.border,
-      borderWidth: 1.5,
-      hoverBorderWidth: 3
+      backgroundColor: ml.bg + "BB", borderColor: ml.border, borderWidth: 2, hoverBorderWidth: 3
     };
   });
 
   // Pareto frontier line
-  const paretoPoints = data
-    .filter(d => d.pareto_rank === 0)
-    .sort((a, b) => a.metrics.val_bpb - b.metrics.val_bpb);
-
+  const paretoPoints = data.filter(d => d.pareto_rank === 0).sort((a, b) => a.metrics.val_bpb - b.metrics.val_bpb);
   if (paretoPoints.length > 1) {
     datasets.push({
-      label: "Pareto Frontier",
-      type: "line",
+      label: "Pareto Frontier", type: "line",
       data: paretoPoints.map(p => ({ x: p.metrics.val_bpb, y: p.metrics.sci_per_token * 1e6 })),
-      borderColor: cc.paretoLine,
-      borderWidth: 2.5,
-      borderDash: [6, 3],
-      pointRadius: 0,
-      fill: false,
-      tension: 0.3,
-      order: -1
+      borderColor: MTA.purple, borderWidth: 2.5, borderDash: [8, 4],
+      pointRadius: 0, fill: false, tension: 0.3, order: -1
     });
   }
 
   if (paretoChart) paretoChart.destroy();
-
   paretoChart = new Chart(ctx, {
-    type: "bubble",
-    data: { datasets },
+    type: "bubble", data: { datasets },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: function(ctx) {
-              const raw = ctx.raw._raw;
-              if (!raw) return ctx.dataset.label;
-              const c = raw.config;
-              const m = raw.metrics;
+            label(ctx) {
+              const r = ctx.raw._raw;
+              if (!r) return ctx.dataset.label;
               return [
-                `${shortModel(c.model_name)} | ${c.quantization === "none" ? "FP16" : c.quantization}`,
-                `Batch: ${c.batch_size} | ${m.tokens_per_sec.toFixed(0)} tok/s`,
-                `SCI: ${(m.sci_per_token * 1e6).toFixed(1)} \u00B5gCO2/tok`,
-                `BPB: ${m.val_bpb.toFixed(3)} | Power: ${m.gpu_power_avg_w}W`
+                `${shortModel(r.config.model_name)} | ${quantLabel(r.config.quantization)}`,
+                `Batch: ${r.config.batch_size} | ${r.metrics.tokens_per_sec.toFixed(0)} tok/s`,
+                `SCI: ${(r.metrics.sci_per_token * 1e6).toFixed(1)} µgCO₂/tok`,
+                `BPB: ${r.metrics.val_bpb.toFixed(3)} | Power: ${r.metrics.gpu_power_avg_w}W`
               ];
             }
           },
-          backgroundColor: cc.tooltipBg,
-          titleColor: cc.tooltipText,
-          bodyColor: cc.tooltipText,
-          padding: 12,
-          cornerRadius: 7
+          backgroundColor: MTA.black, titleColor: MTA.white, bodyColor: MTA.white,
+          padding: 12, cornerRadius: 4
         }
       },
       scales: {
-        x: {
-          title: { display: true, text: "Validation BPB (lower = better quality)", font: { weight: 600 } },
-          grid: { color: "rgba(0,0,0,0.05)" }
-        },
-        y: {
-          title: { display: true, text: "SCI (\u00B5gCO2 / token) \u2014 lower = greener", font: { weight: 600 } },
-          grid: { color: "rgba(0,0,0,0.05)" }
-        }
+        x: { title: { display: true, text: "Validation BPB (lower = better quality)", font: { weight: 600 } }, grid: { color: "rgba(0,0,0,.06)" } },
+        y: { title: { display: true, text: "SCI (µgCO₂/token) — lower = greener", font: { weight: 600 } }, grid: { color: "rgba(0,0,0,.06)" } }
       },
-      onClick: (evt, elements) => {
+      onClick: (_, elements) => {
         if (elements.length > 0) {
           const el = elements[0];
           const raw = paretoChart.data.datasets[el.datasetIndex].data[el.index]._raw;
@@ -313,164 +205,106 @@ function renderParetoChart() {
     }
   });
 
-  // Legend
+  // MTA-style legend with circle badges
   const legendEl = document.getElementById("pareto-legend");
-  legendEl.innerHTML = quants.map(q => {
-    const c = quantColors[q] || { bg: getCSSColor("--color-gray-500") };
-    const label = q === "none" ? "No Quantization" : q.toUpperCase();
-    return `<span class="kz-legend__item"><span class="kz-legend__dot" style="background:${c.bg}"></span>${label}</span>`;
-  }).join("") + `<span class="kz-legend__item"><span class="kz-legend__dot" style="background:${cc.paretoLine};border:2px dashed ${cc.paretoLineAccent};"></span>Pareto Frontier</span>`;
+  legendEl.innerHTML = models.map(m => {
+    const ml = MODEL_LINES[m] || { bg: MTA.gray, circle: "gray", letter: "?", label: m };
+    return `<span class="mta-legend__item">${modelBadge("x/" + m, "sm")} ${ml.label}</span>`;
+  }).join("") + `<span class="mta-legend__item"><span class="mta-legend__dot" style="background:${MTA.purple};border:2px dashed #9a2c92"></span>Pareto Frontier</span>`;
 }
 
-// ─── Preview Table (Top 5 Greenest) — uses event delegation ──────────────────
+// ─── Preview Table ──────────────────────────────────────────────────────────────
 function renderPreviewTable() {
-  const data = completedData()
-    .sort((a, b) => a.metrics.sci_per_token - b.metrics.sci_per_token)
-    .slice(0, 5);
-
+  const data = completedData().sort((a, b) => a.metrics.sci_per_token - b.metrics.sci_per_token).slice(0, 5);
   document.getElementById("preview-table-body").innerHTML = data.map((d, i) => {
-    const c = d.config;
-    const m = d.metrics;
-    const isPareto = d.pareto_rank === 0;
-    return `
-      <tr class="kz-table-row kz-table-row--clickable ${isPareto ? "kz-table-row--pareto" : ""}" data-hash="${d.config_hash}" tabindex="0" role="row">
-        <td class="kz-table-cell kz-table-cell--rank">${i + 1}</td>
-        <td class="kz-table-cell"><strong>${shortModel(c.model_name)}</strong></td>
-        <td class="kz-table-cell"><span class="kz-tag kz-tag--sm ${quantTagClass(c.quantization)}">${quantLabel(c.quantization)}</span></td>
-        <td class="kz-table-cell kz-table-cell--right">${c.batch_size}</td>
-        <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono ${sciScoreClass(m.sci_per_token)}">${(m.sci_per_token * 1e6).toFixed(2)}\u00B5g</td>
-        <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${m.val_bpb.toFixed(3)}</td>
-        <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${m.tokens_per_sec.toFixed(0)}</td>
-        <td class="kz-table-cell kz-table-cell--center">${isPareto ? '<span class="kz-badge kz-badge--pareto">Pareto</span>' : ""}</td>
-      </tr>`;
+    const c = d.config, m = d.metrics, pareto = d.pareto_rank === 0;
+    return `<tr class="--clickable ${pareto ? "--pareto" : ""}" data-hash="${d.config_hash}" tabindex="0">
+      <td class="--rank">${i + 1}</td>
+      <td><span class="flex flex--center flex--gap-8">${modelBadge(c.model_name)} <strong>${shortModel(c.model_name)}</strong></span></td>
+      <td><span class="mta-tag mta-tag--blue mta-tag--sm">${quantLabel(c.quantization)}</span></td>
+      <td class="--right">${c.batch_size}</td>
+      <td class="--right --mono ${sciScoreClass(m.sci_per_token)}">${(m.sci_per_token * 1e6).toFixed(2)}µg</td>
+      <td class="--right --mono">${m.val_bpb.toFixed(3)}</td>
+      <td class="--right --mono">${m.tokens_per_sec.toFixed(0)}</td>
+      <td class="--center">${pareto ? '<span class="mta-badge mta-badge--pareto">Pareto</span>' : ""}</td>
+    </tr>`;
   }).join("");
-
-  staggerRows(document.getElementById("preview-table-body"), ".kz-table-row");
+  staggerRows(document.getElementById("preview-table-body"), "tr");
 }
 
-// Event delegation for preview table
-document.getElementById("preview-table-body").addEventListener("click", e => {
-  const row = e.target.closest(".kz-table-row--clickable");
-  if (row) {
-    const exp = BENCHMARK_DATA.find(d => d.config_hash === row.dataset.hash);
-    if (exp) openDetailModal(exp);
-  }
-});
-document.getElementById("preview-table-body").addEventListener("keydown", e => {
-  if (e.key === "Enter" || e.key === " ") {
-    const row = e.target.closest(".kz-table-row--clickable");
-    if (row) {
+// Table click delegation
+["preview-table-body", "leaderboard-tbody"].forEach(id => {
+  document.getElementById(id).addEventListener("click", e => {
+    const row = e.target.closest("tr.--clickable");
+    if (row) { const exp = BENCHMARK_DATA.find(d => d.config_hash === row.dataset.hash); if (exp) openDetailModal(exp); }
+  });
+  document.getElementById(id).addEventListener("keydown", e => {
+    if ((e.key === "Enter" || e.key === " ") && e.target.closest("tr.--clickable")) {
       e.preventDefault();
-      const exp = BENCHMARK_DATA.find(d => d.config_hash === row.dataset.hash);
+      const exp = BENCHMARK_DATA.find(d => d.config_hash === e.target.closest("tr").dataset.hash);
       if (exp) openDetailModal(exp);
     }
-  }
+  });
 });
 
-// ─── Leaderboards ─────────────────────────────────────────────────────────────
-const LEADERBOARD_DEFS = {
-  greenest: {
-    title: "Greenest \u2014 SCI Score",
-    sortKey: "sci_per_token",
-    sortDir: "asc",
-    columns: [
-      { key: "rank", label: "#", align: "center" },
-      { key: "model", label: "Model" },
-      { key: "quant", label: "Quant" },
-      { key: "batch", label: "Batch", align: "right" },
-      { key: "sci_per_token", label: "SCI (\u00B5gCO2/tok)", align: "right", fmt: v => (v * 1e6).toFixed(2), colorFn: v => sciScoreClass(v) },
-      { key: "carbon_operational_g", label: "Operational (g)", align: "right", fmt: v => v.toExponential(2) },
-      { key: "carbon_embodied_g", label: "Embodied (g)", align: "right", fmt: v => v.toExponential(2) },
-      { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3) },
-      { key: "tokens_per_sec", label: "tok/s", align: "right", fmt: v => v.toFixed(0) },
-      { key: "pareto", label: "Pareto", align: "center" }
-    ]
-  },
-  efficient: {
-    title: "Most Energy Efficient \u2014 J/Token",
-    sortKey: "energy_per_token_j",
-    sortDir: "asc",
-    columns: [
-      { key: "rank", label: "#", align: "center" },
-      { key: "model", label: "Model" },
-      { key: "quant", label: "Quant" },
-      { key: "batch", label: "Batch", align: "right" },
-      { key: "energy_per_token_j", label: "J/token", align: "right", fmt: v => v.toFixed(3), colorFn: v => energyScoreClass(v) },
-      { key: "energy_kwh_per_token", label: "kWh/token", align: "right", fmt: v => v.toExponential(2) },
-      { key: "gpu_power_avg_w", label: "Watts avg", align: "right", fmt: v => v.toFixed(1) },
-      { key: "gpu_util_avg_pct", label: "GPU Util%", align: "right", fmt: v => v.toFixed(1) + "%" },
-      { key: "tokens_per_sec", label: "tok/s", align: "right", fmt: v => v.toFixed(0) },
-      { key: "pareto", label: "Pareto", align: "center" }
-    ]
-  },
-  perfwatt: {
-    title: "Best Performance per Watt \u2014 tok/J",
-    sortKey: "gpu_efficiency",
-    sortDir: "desc",
-    columns: [
-      { key: "rank", label: "#", align: "center" },
-      { key: "model", label: "Model" },
-      { key: "quant", label: "Quant" },
-      { key: "batch", label: "Batch", align: "right" },
-      { key: "gpu_efficiency", label: "tok/J", align: "right", fmt: v => v.toFixed(3), colorFn: v => v > 5 ? "kz-score--good" : v > 1 ? "kz-score--ok" : "kz-score--bad" },
-      { key: "tokens_per_sec", label: "tok/s", align: "right", fmt: v => v.toFixed(0) },
-      { key: "gpu_power_avg_w", label: "Watts", align: "right", fmt: v => v.toFixed(1) },
-      { key: "gpu_util_avg_pct", label: "GPU Util%", align: "right", fmt: v => v.toFixed(1) + "%" },
-      { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3) },
-      { key: "pareto", label: "Pareto", align: "center" }
-    ]
-  },
-  quality: {
-    title: "Best Quality \u2014 Validation BPB",
-    sortKey: "val_bpb",
-    sortDir: "asc",
-    columns: [
-      { key: "rank", label: "#", align: "center" },
-      { key: "model", label: "Model" },
-      { key: "quant", label: "Quant" },
-      { key: "batch", label: "Batch", align: "right" },
-      { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3), colorFn: v => v <= 1.5 ? "kz-score--good" : v <= 2.0 ? "kz-score--ok" : "kz-score--bad" },
-      { key: "sci_per_token", label: "SCI (\u00B5g)", align: "right", fmt: v => (v * 1e6).toFixed(2) },
-      { key: "energy_per_token_j", label: "J/token", align: "right", fmt: v => v.toFixed(3) },
-      { key: "tokens_per_sec", label: "tok/s", align: "right", fmt: v => v.toFixed(0) },
-      { key: "mem_used_gb", label: "Mem GB", align: "right", fmt: v => v.toFixed(1) },
-      { key: "pareto", label: "Pareto", align: "center" }
-    ]
-  },
-  fastest: {
-    title: "Fastest \u2014 Throughput",
-    sortKey: "tokens_per_sec",
-    sortDir: "desc",
-    columns: [
-      { key: "rank", label: "#", align: "center" },
-      { key: "model", label: "Model" },
-      { key: "quant", label: "Quant" },
-      { key: "batch", label: "Batch", align: "right" },
-      { key: "tokens_per_sec", label: "tok/s", align: "right", fmt: v => v.toFixed(0), colorFn: v => v > 100 ? "kz-score--good" : v > 30 ? "kz-score--ok" : "kz-score--bad" },
-      { key: "latency_p50_ms", label: "P50 (ms)", align: "right", fmt: v => v.toFixed(1) },
-      { key: "gpu_power_avg_w", label: "Watts", align: "right", fmt: v => v.toFixed(1) },
-      { key: "energy_per_token_j", label: "J/token", align: "right", fmt: v => v.toFixed(3) },
-      { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3) },
-      { key: "pareto", label: "Pareto", align: "center" }
-    ]
-  },
-  cheapest: {
-    title: "Cheapest \u2014 Cost per Token",
-    sortKey: "cost_per_token_usd",
-    sortDir: "asc",
-    columns: [
-      { key: "rank", label: "#", align: "center" },
-      { key: "model", label: "Model" },
-      { key: "quant", label: "Quant" },
-      { key: "batch", label: "Batch", align: "right" },
-      { key: "cost_per_token_usd", label: "$/1M tokens", align: "right", fmt: v => "$" + (v * 1e6).toFixed(4), colorFn: v => v * 1e6 < 0.005 ? "kz-score--good" : v * 1e6 < 0.05 ? "kz-score--ok" : "kz-score--bad" },
-      { key: "cost_per_token_usd_raw", label: "$/token", align: "right", fmt: v => v.toExponential(2) },
-      { key: "energy_kwh_per_token", label: "kWh/token", align: "right", fmt: v => v.toExponential(2) },
-      { key: "sci_per_token", label: "SCI (\u00B5g)", align: "right", fmt: v => (v * 1e6).toFixed(2) },
-      { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3) },
-      { key: "pareto", label: "Pareto", align: "center" }
-    ]
-  }
+// ─── Leaderboard Definitions ────────────────────────────────────────────────────
+const BOARDS = {
+  greenest:  { title: "Greenest", sortKey: "sci_per_token", dir: "asc", cols: [
+    { key: "rank", label: "#", align: "center" }, { key: "model", label: "Model" }, { key: "quant", label: "Quant" },
+    { key: "batch", label: "Batch", align: "right" },
+    { key: "sci_per_token", label: "SCI (µg)", align: "right", fmt: v => (v*1e6).toFixed(2), color: sciScoreClass },
+    { key: "carbon_operational_g", label: "Op (g)", align: "right", fmt: v => v.toExponential(2) },
+    { key: "carbon_embodied_g", label: "Emb (g)", align: "right", fmt: v => v.toExponential(2) },
+    { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3) },
+    { key: "tokens_per_sec", label: "tok/s", align: "right", fmt: v => v.toFixed(0) },
+    { key: "pareto", label: "Pareto", align: "center" }
+  ]},
+  efficient: { title: "Most Efficient", sortKey: "energy_per_token_j", dir: "asc", cols: [
+    { key: "rank", label: "#", align: "center" }, { key: "model", label: "Model" }, { key: "quant", label: "Quant" },
+    { key: "batch", label: "Batch", align: "right" },
+    { key: "energy_per_token_j", label: "J/tok", align: "right", fmt: v => v.toFixed(3), color: energyScoreClass },
+    { key: "gpu_power_avg_w", label: "Watts", align: "right", fmt: v => v.toFixed(1) },
+    { key: "gpu_util_avg_pct", label: "GPU%", align: "right", fmt: v => v.toFixed(1)+"%" },
+    { key: "tokens_per_sec", label: "tok/s", align: "right", fmt: v => v.toFixed(0) },
+    { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3) },
+    { key: "pareto", label: "Pareto", align: "center" }
+  ]},
+  perfwatt:  { title: "Perf/Watt", sortKey: "gpu_efficiency", dir: "desc", cols: [
+    { key: "rank", label: "#", align: "center" }, { key: "model", label: "Model" }, { key: "quant", label: "Quant" },
+    { key: "batch", label: "Batch", align: "right" },
+    { key: "gpu_efficiency", label: "tok/J", align: "right", fmt: v => v.toFixed(3), color: v => v>5?"score--good":v>1?"score--ok":"score--bad" },
+    { key: "tokens_per_sec", label: "tok/s", align: "right", fmt: v => v.toFixed(0) },
+    { key: "gpu_power_avg_w", label: "Watts", align: "right", fmt: v => v.toFixed(1) },
+    { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3) },
+    { key: "pareto", label: "Pareto", align: "center" }
+  ]},
+  quality:   { title: "Best Quality", sortKey: "val_bpb", dir: "asc", cols: [
+    { key: "rank", label: "#", align: "center" }, { key: "model", label: "Model" }, { key: "quant", label: "Quant" },
+    { key: "batch", label: "Batch", align: "right" },
+    { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3), color: v => v<=1.5?"score--good":v<=2?"score--ok":"score--bad" },
+    { key: "sci_per_token", label: "SCI (µg)", align: "right", fmt: v => (v*1e6).toFixed(2) },
+    { key: "tokens_per_sec", label: "tok/s", align: "right", fmt: v => v.toFixed(0) },
+    { key: "mem_used_gb", label: "Mem GB", align: "right", fmt: v => v.toFixed(1) },
+    { key: "pareto", label: "Pareto", align: "center" }
+  ]},
+  fastest:   { title: "Fastest", sortKey: "tokens_per_sec", dir: "desc", cols: [
+    { key: "rank", label: "#", align: "center" }, { key: "model", label: "Model" }, { key: "quant", label: "Quant" },
+    { key: "batch", label: "Batch", align: "right" },
+    { key: "tokens_per_sec", label: "tok/s", align: "right", fmt: v => v.toFixed(0), color: v => v>100?"score--good":v>30?"score--ok":"score--bad" },
+    { key: "latency_p50_ms", label: "P50 ms", align: "right", fmt: v => v.toFixed(1) },
+    { key: "gpu_power_avg_w", label: "Watts", align: "right", fmt: v => v.toFixed(1) },
+    { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3) },
+    { key: "pareto", label: "Pareto", align: "center" }
+  ]},
+  cheapest:  { title: "Cheapest", sortKey: "cost_per_token_usd", dir: "asc", cols: [
+    { key: "rank", label: "#", align: "center" }, { key: "model", label: "Model" }, { key: "quant", label: "Quant" },
+    { key: "batch", label: "Batch", align: "right" },
+    { key: "cost_per_token_usd", label: "$/1M tok", align: "right", fmt: v => "$"+(v*1e6).toFixed(4), color: v => v*1e6<.005?"score--good":v*1e6<.05?"score--ok":"score--bad" },
+    { key: "energy_kwh_per_token", label: "kWh/tok", align: "right", fmt: v => v.toExponential(2) },
+    { key: "sci_per_token", label: "SCI (µg)", align: "right", fmt: v => (v*1e6).toFixed(2) },
+    { key: "val_bpb", label: "BPB", align: "right", fmt: v => v.toFixed(3) },
+    { key: "pareto", label: "Pareto", align: "center" }
+  ]}
 };
 
 let currentBoard = "greenest";
@@ -478,859 +312,281 @@ let currentSort = { key: "sci_per_token", dir: "asc" };
 
 function getFilteredData() {
   let data = completedData();
-  const modelFilter = document.getElementById("filter-model").value;
-  const quantFilter = document.getElementById("filter-quant").value;
-  const batchFilter = document.getElementById("filter-batch").value;
-
-  if (modelFilter !== "all") data = data.filter(d => shortModel(d.config.model_name) === modelFilter);
-  if (quantFilter !== "all") data = data.filter(d => d.config.quantization === quantFilter);
-  if (batchFilter !== "all") data = data.filter(d => String(d.config.batch_size) === batchFilter);
-
+  const mf = document.getElementById("filter-model").value;
+  const qf = document.getElementById("filter-quant").value;
+  const bf = document.getElementById("filter-batch").value;
+  if (mf !== "all") data = data.filter(d => shortModel(d.config.model_name) === mf);
+  if (qf !== "all") data = data.filter(d => d.config.quantization === qf);
+  if (bf !== "all") data = data.filter(d => String(d.config.batch_size) === bf);
   return data;
 }
 
-function getCellValue(d, key) {
+function cellVal(d, key) {
   if (key === "rank") return 0;
   if (key === "model") return shortModel(d.config.model_name);
   if (key === "quant") return d.config.quantization;
   if (key === "batch") return d.config.batch_size;
   if (key === "pareto") return d.pareto_rank === 0 ? 0 : 1;
-  if (key === "cost_per_token_usd_raw") return d.metrics.cost_per_token_usd;
-  return d.metrics[key] !== undefined ? d.metrics[key] : 0;
+  return d.metrics[key] ?? 0;
 }
 
+// ─── Leaderboard Rendering ──────────────────────────────────────────────────────
 function renderLeaderboard() {
-  const def = LEADERBOARD_DEFS[currentBoard];
-  if (!def) return;
-
+  const def = BOARDS[currentBoard]; if (!def) return;
   let data = getFilteredData();
-  const sortMul = currentSort.dir === "asc" ? 1 : -1;
+  const mul = currentSort.dir === "asc" ? 1 : -1;
   data.sort((a, b) => {
-    const av = getCellValue(a, currentSort.key);
-    const bv = getCellValue(b, currentSort.key);
-    if (typeof av === "string") return sortMul * av.localeCompare(bv);
-    return sortMul * (av - bv);
+    const av = cellVal(a, currentSort.key), bv = cellVal(b, currentSort.key);
+    return typeof av === "string" ? mul * av.localeCompare(bv) : mul * (av - bv);
   });
 
-  // Header with scope attributes
-  document.getElementById("leaderboard-thead").innerHTML = `
-    <tr class="kz-table-header">
-      ${def.columns.map(col => {
-        const isSorted = currentSort.key === col.key;
-        const sortClass = isSorted ? (currentSort.dir === "asc" ? "kz-table-header-cell--sorted-asc" : "kz-table-header-cell--sorted-desc") : "";
-        const alignClass = col.align === "right" ? "kz-table-header-cell--right" : col.align === "center" ? "kz-table-header-cell--center" : "";
-        const sortable = col.key !== "rank" && col.key !== "pareto" ? "kz-table-header-cell--sortable" : "";
-        const ariaSort = isSorted ? ` aria-sort="${currentSort.dir === "asc" ? "ascending" : "descending"}"` : "";
-        return `<th class="kz-table-header-cell ${alignClass} ${sortable} ${sortClass}" scope="col" data-sort="${col.key}"${sortable ? ' tabindex="0"' : ""}${ariaSort}>${col.label}</th>`;
-      }).join("")}
-    </tr>`;
+  document.getElementById("leaderboard-thead").innerHTML = `<tr>${def.cols.map(col => {
+    const sorted = currentSort.key === col.key;
+    const sortCls = sorted ? (currentSort.dir === "asc" ? " --sorted-asc" : " --sorted-desc") : "";
+    const align = col.align === "right" ? " --right" : col.align === "center" ? " --center" : "";
+    const sortable = !["rank","pareto"].includes(col.key) ? " --sortable" : "";
+    const aria = sorted ? ` aria-sort="${currentSort.dir === "asc" ? "ascending" : "descending"}"` : "";
+    return `<th class="${align}${sortable}${sortCls}" data-sort="${col.key}"${sortable ? ' tabindex="0"' : ""}${aria}>${col.label}</th>`;
+  }).join("")}</tr>`;
 
-  // Body with keyboard accessible rows
   document.getElementById("leaderboard-tbody").innerHTML = data.map((d, i) => {
-    const isPareto = d.pareto_rank === 0;
-    return `<tr class="kz-table-row kz-table-row--clickable ${isPareto ? "kz-table-row--pareto" : ""}" data-hash="${d.config_hash}" tabindex="0" role="row">
-      ${def.columns.map(col => {
-        const alignClass = col.align === "right" ? "kz-table-cell--right" : col.align === "center" ? "kz-table-cell--center" : "";
-        let val;
-        if (col.key === "rank") val = i + 1;
-        else if (col.key === "model") val = `<strong>${shortModel(d.config.model_name)}</strong>`;
-        else if (col.key === "quant") val = `<span class="kz-tag kz-tag--sm ${quantTagClass(d.config.quantization)}">${quantLabel(d.config.quantization)}</span>`;
-        else if (col.key === "batch") val = d.config.batch_size;
-        else if (col.key === "pareto") val = isPareto ? '<span class="kz-badge kz-badge--pareto">Pareto</span>' : "";
-        else if (col.key === "cost_per_token_usd_raw") val = `<span class="kz-table-cell--mono">${col.fmt(d.metrics.cost_per_token_usd)}</span>`;
-        else {
-          const raw = d.metrics[col.key];
-          const colorClass = col.colorFn ? " " + col.colorFn(raw) : "";
-          val = `<span class="kz-table-cell--mono${colorClass}">${col.fmt ? col.fmt(raw) : fmtNum(raw)}</span>`;
-        }
-        const rankClass = col.key === "rank" ? "kz-table-cell--rank" : "";
-        return `<td class="kz-table-cell ${alignClass} ${rankClass}">${val}</td>`;
-      }).join("")}
-    </tr>`;
+    const pareto = d.pareto_rank === 0;
+    return `<tr class="--clickable${pareto ? " --pareto" : ""}" data-hash="${d.config_hash}" tabindex="0">
+    ${def.cols.map(col => {
+      const align = col.align === "right" ? " --right" : col.align === "center" ? " --center" : "";
+      let val;
+      if (col.key === "rank") val = `<span class="--rank">${i + 1}</span>`;
+      else if (col.key === "model") val = `<span class="flex flex--center flex--gap-8">${modelBadge(d.config.model_name)} <strong>${shortModel(d.config.model_name)}</strong></span>`;
+      else if (col.key === "quant") val = `<span class="mta-tag mta-tag--blue mta-tag--sm">${quantLabel(d.config.quantization)}</span>`;
+      else if (col.key === "batch") val = d.config.batch_size;
+      else if (col.key === "pareto") val = pareto ? '<span class="mta-badge mta-badge--pareto">Pareto</span>' : "";
+      else {
+        const raw = d.metrics[col.key]; const cls = col.color ? " " + col.color(raw) : "";
+        val = `<span class="--mono${cls}">${col.fmt ? col.fmt(raw) : fmtNum(raw)}</span>`;
+      }
+      return `<td class="${align}">${val}</td>`;
+    }).join("")}</tr>`;
   }).join("");
 
-  staggerRows(document.getElementById("leaderboard-tbody"), ".kz-table-row");
-
-  // Update tabpanel's aria-labelledby
+  staggerRows(document.getElementById("leaderboard-tbody"), "tr");
   document.getElementById("leaderboard-panel").setAttribute("aria-labelledby", `tab-${currentBoard}`);
 }
 
-// Event delegation for leaderboard table (sort headers + row clicks)
+// Sort + Tab handlers
 document.getElementById("leaderboard-thead").addEventListener("click", e => {
-  const th = e.target.closest(".kz-table-header-cell--sortable");
-  if (!th) return;
-  handleSort(th.dataset.sort);
+  const th = e.target.closest("th.--sortable"); if (!th) return; handleSort(th.dataset.sort);
 });
 document.getElementById("leaderboard-thead").addEventListener("keydown", e => {
-  if (e.key === "Enter" || e.key === " ") {
-    const th = e.target.closest(".kz-table-header-cell--sortable");
-    if (th) { e.preventDefault(); handleSort(th.dataset.sort); }
-  }
-});
-document.getElementById("leaderboard-tbody").addEventListener("click", e => {
-  const row = e.target.closest(".kz-table-row--clickable");
-  if (row) {
-    const exp = BENCHMARK_DATA.find(d => d.config_hash === row.dataset.hash);
-    if (exp) openDetailModal(exp);
-  }
-});
-document.getElementById("leaderboard-tbody").addEventListener("keydown", e => {
-  if (e.key === "Enter" || e.key === " ") {
-    const row = e.target.closest(".kz-table-row--clickable");
-    if (row) {
-      e.preventDefault();
-      const exp = BENCHMARK_DATA.find(d => d.config_hash === row.dataset.hash);
-      if (exp) openDetailModal(exp);
-    }
+  if ((e.key === "Enter" || e.key === " ") && e.target.closest("th.--sortable")) {
+    e.preventDefault(); handleSort(e.target.closest("th").dataset.sort);
   }
 });
 
 function handleSort(key) {
-  if (currentSort.key === key) {
-    currentSort.dir = currentSort.dir === "asc" ? "desc" : "asc";
-  } else {
-    currentSort.key = key;
-    const def = LEADERBOARD_DEFS[currentBoard];
-    currentSort.dir = key === def.sortKey ? def.sortDir : "asc";
-  }
+  if (currentSort.key === key) currentSort.dir = currentSort.dir === "asc" ? "desc" : "asc";
+  else { currentSort.key = key; currentSort.dir = BOARDS[currentBoard].dir || "asc"; }
   renderLeaderboard();
 }
 
-// Tab switching with ARIA + arrow key navigation
 const tabContainer = document.getElementById("leaderboard-tabs");
-tabContainer.addEventListener("click", e => {
-  const tab = e.target.closest(".kz-tab");
-  if (!tab) return;
-  activateTab(tab);
-});
+tabContainer.addEventListener("click", e => { const tab = e.target.closest(".mta-tab"); if (tab) activateTab(tab); });
 tabContainer.addEventListener("keydown", e => {
-  const tabs = [...tabContainer.querySelectorAll(".kz-tab")];
-  const current = tabs.indexOf(e.target);
-  if (current === -1) return;
-
+  const tabs = [...tabContainer.querySelectorAll(".mta-tab")];
+  const cur = tabs.indexOf(e.target); if (cur === -1) return;
   let next;
-  if (e.key === "ArrowRight") next = (current + 1) % tabs.length;
-  else if (e.key === "ArrowLeft") next = (current - 1 + tabs.length) % tabs.length;
+  if (e.key === "ArrowRight") next = (cur + 1) % tabs.length;
+  else if (e.key === "ArrowLeft") next = (cur - 1 + tabs.length) % tabs.length;
   else if (e.key === "Home") next = 0;
   else if (e.key === "End") next = tabs.length - 1;
   else return;
-
-  e.preventDefault();
-  tabs[next].focus();
-  activateTab(tabs[next]);
+  e.preventDefault(); tabs[next].focus(); activateTab(tabs[next]);
 });
 
 function activateTab(tab) {
-  tabContainer.querySelectorAll(".kz-tab").forEach(t => {
-    t.classList.remove("is-selected");
-    t.setAttribute("aria-selected", "false");
-    t.setAttribute("tabindex", "-1");
+  tabContainer.querySelectorAll(".mta-tab").forEach(t => {
+    t.classList.remove("is-selected"); t.setAttribute("aria-selected", "false"); t.setAttribute("tabindex", "-1");
   });
-  tab.classList.add("is-selected");
-  tab.setAttribute("aria-selected", "true");
-  tab.setAttribute("tabindex", "0");
+  tab.classList.add("is-selected"); tab.setAttribute("aria-selected", "true"); tab.setAttribute("tabindex", "0");
   currentBoard = tab.dataset.board;
-  const def = LEADERBOARD_DEFS[currentBoard];
-  currentSort = { key: def.sortKey, dir: def.sortDir };
+  const def = BOARDS[currentBoard];
+  currentSort = { key: def.sortKey, dir: def.dir };
   renderLeaderboard();
 }
 
 // Filters
 function populateFilters() {
   const data = completedData();
-  const models = [...new Set(data.map(d => shortModel(d.config.model_name)))].sort();
-  const quants = [...new Set(data.map(d => d.config.quantization))].sort();
-  const batches = [...new Set(data.map(d => d.config.batch_size))].sort((a, b) => a - b);
-
-  const modelSelect = document.getElementById("filter-model");
-  models.forEach(m => { const o = document.createElement("option"); o.value = m; o.textContent = m; modelSelect.appendChild(o); });
-
-  const quantSelect = document.getElementById("filter-quant");
-  quants.forEach(q => { const o = document.createElement("option"); o.value = q; o.textContent = q === "none" ? "No Quantization" : q.toUpperCase(); quantSelect.appendChild(o); });
-
-  const batchSelect = document.getElementById("filter-batch");
-  batches.forEach(b => { const o = document.createElement("option"); o.value = b; o.textContent = b; batchSelect.appendChild(o); });
+  const add = (id, items, fmt) => items.forEach(v => {
+    const o = document.createElement("option"); o.value = v; o.textContent = fmt ? fmt(v) : v;
+    document.getElementById(id).appendChild(o);
+  });
+  add("filter-model", [...new Set(data.map(d => shortModel(d.config.model_name)))].sort());
+  add("filter-quant", [...new Set(data.map(d => d.config.quantization))].sort(), q => q === "none" ? "No Quant" : q.toUpperCase());
+  add("filter-batch", [...new Set(data.map(d => d.config.batch_size))].sort((a,b) => a-b));
 }
+["filter-model","filter-quant","filter-batch"].forEach(id => document.getElementById(id).addEventListener("change", renderLeaderboard));
 
-document.getElementById("filter-model").addEventListener("change", renderLeaderboard);
-document.getElementById("filter-quant").addEventListener("change", renderLeaderboard);
-document.getElementById("filter-batch").addEventListener("change", renderLeaderboard);
-
-// ─── Experiment Detail Modal with Focus Trap ──────────────────────────────────
-let modalPieChart = null;
-let modalLatencyChart = null;
-let previouslyFocused = null;
+// ─── Detail Modal ───────────────────────────────────────────────────────────────
+let modalPieChart = null, modalLatencyChart = null, prevFocus = null;
 
 function openDetailModal(exp) {
-  const overlay = document.getElementById("detail-modal");
-  const modal = overlay.querySelector(".kz-modal");
-  const c = exp.config;
-  const m = exp.metrics;
-  const cc = getChartColors();
-
-  previouslyFocused = document.activeElement;
-
-  // Title
-  document.getElementById("modal-title").textContent = shortModel(c.model_name) + " \u2014 Detail";
-
-  // Config tags
+  const c = exp.config, m = exp.metrics, ml = getModelLine(c.model_name);
+  prevFocus = document.activeElement;
+  document.getElementById("modal-title").textContent = shortModel(c.model_name) + " — Detail";
   document.getElementById("modal-config-tags").innerHTML = [
-    `<span class="kz-tag ${quantTagClass(c.quantization)}">${quantLabel(c.quantization)}</span>`,
-    `<span class="kz-tag">Batch ${c.batch_size}</span>`,
-    `<span class="kz-tag">Seq ${c.sequence_length}</span>`,
-    `<span class="kz-tag">${c.dtype}</span>`,
-    c.use_kv_cache ? `<span class="kz-tag kz-tag--positive">KV Cache</span>` : "",
-    exp.pareto_rank === 0 ? `<span class="kz-badge kz-badge--pareto">Pareto Optimal</span>` : "",
-    `<span class="kz-tag kz-tag--draft">${exp.strategy_used}</span>`
+    `<span class="mta-tag mta-tag--blue">${quantLabel(c.quantization)}</span>`,
+    `<span class="mta-tag">Batch ${c.batch_size}</span>`,
+    `<span class="mta-tag">Seq ${c.sequence_length}</span>`,
+    `<span class="mta-tag">${c.dtype}</span>`,
+    c.use_kv_cache ? `<span class="mta-tag mta-tag--green">KV Cache</span>` : "",
+    exp.pareto_rank === 0 ? `<span class="mta-badge mta-badge--pareto">Pareto</span>` : "",
+    `<span class="mta-tag mta-tag--orange">${exp.strategy_used}</span>`
   ].filter(Boolean).join(" ");
 
-  // Metrics grid
   const metrics = [
-    { label: "SCI Score", value: (m.sci_per_token * 1e6).toFixed(2) + " \u00B5gCO2/tok", color: "green" },
-    { label: "Energy/Token", value: m.energy_per_token_j.toFixed(3) + " J", color: "green" },
-    { label: "kWh/Token", value: m.energy_kwh_per_token.toExponential(2), color: "" },
-    { label: "Throughput", value: m.tokens_per_sec.toFixed(0) + " tok/s", color: "blue" },
-    { label: "GPU Efficiency", value: m.gpu_efficiency.toFixed(3) + " tok/J", color: "blue" },
-    { label: "Cost/Token", value: "$" + (m.cost_per_token_usd * 1e6).toFixed(4) + "/1M", color: "" },
-    { label: "Avg Power", value: m.gpu_power_avg_w.toFixed(1) + " W", color: "" },
-    { label: "Max Power", value: m.gpu_power_max_w.toFixed(1) + " W", color: m.gpu_power_max_w > 80 ? "yellow" : "" },
-    { label: "GPU Utilization", value: m.gpu_util_avg_pct.toFixed(1) + "%", color: "" },
-    { label: "GPU Temp (avg)", value: m.gpu_temp_avg_c.toFixed(1) + " \u00B0C", color: m.gpu_temp_avg_c > 60 ? "yellow" : "" },
-    { label: "GPU Temp (max)", value: m.gpu_temp_max_c.toFixed(1) + " \u00B0C", color: m.gpu_temp_max_c > 75 ? "red" : "" },
-    { label: "Thermal Throttled", value: m.thermal_throttled ? "YES" : "No", color: m.thermal_throttled ? "red" : "green" },
-    { label: "Memory Used", value: m.mem_used_gb.toFixed(1) + " GB", color: "" },
-    { label: "Memory Pressure", value: m.mem_pressure_pct.toFixed(1) + "%", color: "" },
-    { label: "Validation BPB", value: m.val_bpb.toFixed(4), color: "blue" },
-    { label: "Total Tokens", value: m.total_tokens.toLocaleString(), color: "" }
+    { l: "SCI Score", v: (m.sci_per_token*1e6).toFixed(2)+" µg", c: "green" },
+    { l: "Energy/Token", v: m.energy_per_token_j.toFixed(3)+" J", c: "green" },
+    { l: "kWh/Token", v: m.energy_kwh_per_token.toExponential(2) },
+    { l: "Throughput", v: m.tokens_per_sec.toFixed(0)+" tok/s", c: "blue" },
+    { l: "Efficiency", v: m.gpu_efficiency.toFixed(3)+" tok/J", c: "blue" },
+    { l: "Cost/1M tok", v: "$"+(m.cost_per_token_usd*1e6).toFixed(4) },
+    { l: "Avg Power", v: m.gpu_power_avg_w.toFixed(1)+" W" },
+    { l: "Max Power", v: m.gpu_power_max_w.toFixed(1)+" W", c: m.gpu_power_max_w>80?"yellow":"" },
+    { l: "GPU Util", v: m.gpu_util_avg_pct.toFixed(1)+"%" },
+    { l: "Temp (avg)", v: m.gpu_temp_avg_c.toFixed(1)+" °C", c: m.gpu_temp_avg_c>60?"yellow":"" },
+    { l: "Temp (max)", v: m.gpu_temp_max_c.toFixed(1)+" °C", c: m.gpu_temp_max_c>75?"red":"" },
+    { l: "Throttled", v: m.thermal_throttled?"YES":"No", c: m.thermal_throttled?"red":"green" },
+    { l: "Memory", v: m.mem_used_gb.toFixed(1)+" GB" },
+    { l: "Mem Pressure", v: m.mem_pressure_pct.toFixed(1)+"%" },
+    { l: "Val BPB", v: m.val_bpb.toFixed(4), c: "blue" },
+    { l: "Total Tokens", v: m.total_tokens.toLocaleString() }
   ];
-
   document.getElementById("modal-metrics").innerHTML = metrics.map(met =>
-    `<div class="kz-metric-card${met.color ? " kz-metric-card--" + met.color : ""}">
-      <div class="kz-metric-card__label">${met.label}</div>
-      <div class="kz-metric-card__value">${met.value}</div>
-    </div>`
+    `<div class="mta-metric${met.c ? " mta-metric--"+met.c : ""}"><div class="mta-metric__label">${met.l}</div><div class="mta-metric__value">${met.v}</div></div>`
   ).join("");
 
-  // SCI breakdown details
+  // SCI breakdown
   const opPct = (m.carbon_operational_g / (m.carbon_operational_g + m.carbon_embodied_g) * 100).toFixed(1);
   const emPct = (100 - parseFloat(opPct)).toFixed(1);
   document.getElementById("modal-sci-details").innerHTML = `
-    <div class="kz-well kz-well--gray kz-mb-0">
-      <div class="kz-heading-5 kz-mb-8">SCI = (E \u00D7 I) + M per token</div>
-      <div class="kz-small kz-mb-16">
-        <div class="kz-flex kz-flex--between kz-mb-8">
-          <span>Operational Carbon</span>
-          <span class="kz-text--bold kz-text--green">${opPct}%</span>
-        </div>
-        <div class="kz-score-bar"><div class="kz-score-bar__fill" style="width:${opPct}%"></div></div>
-        <div class="kz-extra-small kz-text--muted kz-mt-8">${m.carbon_operational_g.toExponential(2)} g/token</div>
+    <div class="mta-well mta-well--gray mb-0">
+      <div class="t-h4 mb-8">SCI = (E × I) + M per token</div>
+      <div class="t-small mb-16">
+        <div class="flex flex--between mb-8"><span>Operational</span><span class="t-bold t-green">${opPct}%</span></div>
+        <div class="mta-score-bar"><div class="mta-score-bar__fill" style="width:${opPct}%"></div></div>
+        <div class="t-xs t-muted mt-8">${m.carbon_operational_g.toExponential(2)} g/tok</div>
       </div>
-      <div class="kz-small">
-        <div class="kz-flex kz-flex--between kz-mb-8">
-          <span>Embodied Carbon</span>
-          <span class="kz-text--bold" style="color:var(--color-purple-500)">${emPct}%</span>
-        </div>
-        <div class="kz-score-bar"><div class="kz-score-bar__fill" style="width:${emPct}%;background:var(--color-purple-400)"></div></div>
-        <div class="kz-extra-small kz-text--muted kz-mt-8">${m.carbon_embodied_g.toExponential(2)} g/token</div>
+      <div class="t-small">
+        <div class="flex flex--between mb-8"><span>Embodied</span><span class="t-bold" style="color:${MTA.purple}">${emPct}%</span></div>
+        <div class="mta-score-bar"><div class="mta-score-bar__fill" style="width:${emPct}%;background:${MTA.purple}"></div></div>
+        <div class="t-xs t-muted mt-8">${m.carbon_embodied_g.toExponential(2)} g/tok</div>
       </div>
     </div>`;
 
-  // Pie chart
+  // Charts
   const pieCtx = document.getElementById("modal-pie-chart").getContext("2d");
   if (modalPieChart) modalPieChart.destroy();
   modalPieChart = new Chart(pieCtx, {
     type: "doughnut",
-    data: {
-      labels: ["Operational", "Embodied"],
-      datasets: [{
-        data: [m.carbon_operational_g, m.carbon_embodied_g],
-        backgroundColor: [cc.operational, cc.embodied],
-        borderWidth: 0,
-        hoverOffset: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: "bottom", labels: { padding: 16 } } },
-      cutout: "60%"
-    }
+    data: { labels: ["Operational","Embodied"], datasets: [{ data: [m.carbon_operational_g, m.carbon_embodied_g], backgroundColor: [MTA.green, MTA.gray], borderWidth: 0, hoverOffset: 6 }] },
+    options: { responsive: true, plugins: { legend: { position: "bottom", labels: { padding: 16 } } }, cutout: "60%" }
   });
 
-  // Latency chart
   const latCtx = document.getElementById("modal-latency-chart").getContext("2d");
   if (modalLatencyChart) modalLatencyChart.destroy();
   modalLatencyChart = new Chart(latCtx, {
     type: "bar",
-    data: {
-      labels: ["P50", "P95", "P99"],
-      datasets: [{
-        label: "Latency (ms)",
-        data: [m.latency_p50_ms, m.latency_p95_ms, m.latency_p99_ms],
-        backgroundColor: [cc.barPrimary, cc.barSecondary, cc.barTertiary],
-        borderRadius: 4,
-        barPercentage: 0.5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { title: { display: true, text: "ms" }, beginAtZero: true, grid: { color: "rgba(0,0,0,0.05)" } },
-        x: { grid: { display: false } }
-      }
-    }
+    data: { labels: ["P50","P95","P99"], datasets: [{ data: [m.latency_p50_ms, m.latency_p95_ms, m.latency_p99_ms], backgroundColor: [MTA.blue, MTA.green, MTA.orange], borderRadius: 4, barPercentage: .5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: "ms" }, beginAtZero: true, grid: { color: "rgba(0,0,0,.05)" } }, x: { grid: { display: false } } } }
   });
 
-  overlay.classList.add("is-open");
-  overlay.setAttribute("aria-hidden", "false");
+  const overlay = document.getElementById("detail-modal");
+  overlay.classList.add("is-open"); overlay.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
-
-  // Focus close button
   document.getElementById("modal-close").focus();
 }
 
 function closeDetailModal() {
   const overlay = document.getElementById("detail-modal");
-  overlay.classList.remove("is-open");
-  overlay.setAttribute("aria-hidden", "true");
+  overlay.classList.remove("is-open"); overlay.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
-
-  if (previouslyFocused) {
-    previouslyFocused.focus();
-    previouslyFocused = null;
-  }
+  if (prevFocus) { prevFocus.focus(); prevFocus = null; }
 }
 
-// Focus trap inside modal
+// Modal events
 document.getElementById("detail-modal").addEventListener("keydown", e => {
   if (e.key === "Escape") { closeDetailModal(); return; }
   if (e.key !== "Tab") return;
-
-  const modal = document.querySelector(".kz-modal");
-  const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-  if (focusable.length === 0) return;
-
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-
-  if (e.shiftKey) {
-    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
-  } else {
-    if (document.activeElement === last) { e.preventDefault(); first.focus(); }
-  }
+  const focusable = document.querySelector(".mta-modal").querySelectorAll('button, [href], input, select, [tabindex]:not([tabindex="-1"])');
+  if (!focusable.length) return;
+  const first = focusable[0], last = focusable[focusable.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 });
-
 document.getElementById("modal-close").addEventListener("click", closeDetailModal);
-document.getElementById("detail-modal").addEventListener("click", e => {
-  if (e.target === e.currentTarget) closeDetailModal();
-});
+document.getElementById("detail-modal").addEventListener("click", e => { if (e.target === e.currentTarget) closeDetailModal(); });
 
-// ─── Carbon Calculator (lazy initialized) ─────────────────────────────────────
+// ─── Calculator ─────────────────────────────────────────────────────────────────
 let regionChart = null;
 
 function initCalculator() {
-  const expSelect = document.getElementById("calc-experiment");
+  const expSel = document.getElementById("calc-experiment");
   completedData().forEach(d => {
-    const o = document.createElement("option");
-    o.value = d.config_hash;
-    o.textContent = `${shortModel(d.config.model_name)} | ${d.config.quantization === "none" ? "FP16" : d.config.quantization} | batch=${d.config.batch_size}`;
-    expSelect.appendChild(o);
+    const o = document.createElement("option"); o.value = d.config_hash;
+    o.textContent = `${shortModel(d.config.model_name)} | ${quantLabel(d.config.quantization)} | batch=${d.config.batch_size}`;
+    expSel.appendChild(o);
   });
-
-  const regSelect = document.getElementById("calc-region");
+  const regSel = document.getElementById("calc-region");
   Object.keys(CARBON_PRESETS).forEach(r => {
-    const o = document.createElement("option");
-    o.value = r;
-    o.textContent = `${r} (${CARBON_PRESETS[r]} gCO2/kWh)`;
-    regSelect.appendChild(o);
+    const o = document.createElement("option"); o.value = r;
+    o.textContent = `${r} (${CARBON_PRESETS[r]} gCO₂/kWh)`; regSel.appendChild(o);
   });
-
-  expSelect.addEventListener("change", updateCalculator);
-  regSelect.addEventListener("change", updateCalculator);
-
+  expSel.addEventListener("change", updateCalculator);
+  regSel.addEventListener("change", updateCalculator);
   updateCalculator();
 }
 
 function updateCalculator() {
-  const hash = document.getElementById("calc-experiment").value;
-  const region = document.getElementById("calc-region").value;
-  const exp = BENCHMARK_DATA.find(d => d.config_hash === hash);
+  const exp = BENCHMARK_DATA.find(d => d.config_hash === document.getElementById("calc-experiment").value);
   if (!exp) return;
-
-  const cc = getChartColors();
+  const region = document.getElementById("calc-region").value;
   const intensity = CARBON_PRESETS[region] || 210;
   document.getElementById("calc-intensity-value").textContent = intensity;
-
   const m = exp.metrics;
-  const operational = m.energy_kwh_per_token * intensity;
-  const embodied = m.carbon_embodied_g;
-  const sci = operational + embodied;
-
+  const op = m.energy_kwh_per_token * intensity, emb = m.carbon_embodied_g, sci = op + emb;
   const sciEl = document.getElementById("calc-sci-result");
-  sciEl.textContent = (sci * 1e6).toFixed(2) + " \u00B5g";
-  flashElement(sciEl);
-  document.getElementById("calc-operational").textContent = (operational * 1e6).toFixed(2) + " \u00B5g";
-  document.getElementById("calc-embodied").textContent = (embodied * 1e6).toFixed(2) + " \u00B5g";
+  sciEl.textContent = (sci * 1e6).toFixed(2) + " µg"; flashElement(sciEl);
+  document.getElementById("calc-operational").textContent = (op * 1e6).toFixed(2) + " µg";
+  document.getElementById("calc-embodied").textContent = (emb * 1e6).toFixed(2) + " µg";
 
-  // Region comparison chart
-  const regions = Object.keys(CARBON_PRESETS);
-  const pairs = regions.map(r => ({
-    region: r,
-    sci: (m.energy_kwh_per_token * CARBON_PRESETS[r] + embodied) * 1e6,
-    isSelected: r === region
-  }));
-  pairs.sort((a, b) => a.sci - b.sci);
+  // Region chart
+  const pairs = Object.keys(CARBON_PRESETS).map(r => ({
+    region: r, sci: (m.energy_kwh_per_token * CARBON_PRESETS[r] + emb) * 1e6, selected: r === region
+  })).sort((a, b) => a.sci - b.sci);
 
-  const ctx = document.getElementById("region-chart").getContext("2d");
   if (regionChart) regionChart.destroy();
-
-  regionChart = new Chart(ctx, {
+  regionChart = new Chart(document.getElementById("region-chart").getContext("2d"), {
     type: "bar",
     data: {
       labels: pairs.map(p => p.region.split(" (")[0]),
-      datasets: [{
-        label: "SCI (\u00B5gCO2/token)",
-        data: pairs.map(p => p.sci),
-        backgroundColor: pairs.map(p => p.isSelected ? cc.barPrimary : cc.barMuted),
-        borderRadius: 4,
-        barPercentage: 0.7
-      }]
+      datasets: [{ label: "SCI (µg)", data: pairs.map(p => p.sci),
+        backgroundColor: pairs.map(p => p.selected ? MTA.green : "#E0E0E0"), borderRadius: 4, barPercentage: .7 }]
     },
     options: {
-      indexAxis: "y",
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: { label: ctx => `${ctx.parsed.x.toFixed(2)} \u00B5gCO2/token` }
-        }
-      },
-      scales: {
-        x: { title: { display: true, text: "SCI (\u00B5gCO2/token)" }, grid: { color: "rgba(0,0,0,0.05)" } },
-        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
-      }
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.x.toFixed(2) + " µgCO₂/tok" } } },
+      scales: { x: { title: { display: true, text: "SCI (µgCO₂/token)" }, grid: { color: "rgba(0,0,0,.05)" } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } }
     }
   });
 }
 
-// ─── Per-Model Scatter Charts (matches display_scatter_per_model) ─────────────
-const perModelCharts = [];
-const MODEL_CHART_COLORS = ["#06b6d4", "#22c55e", "#eab308", "#d946ef", "#3b82f6", "#ef4444", "#14b8a6", "#f97316"];
-
-function renderPerModelScatter() {
-  const data = completedData();
-  const container = document.getElementById("per-model-charts");
-  const cc = getChartColors();
-
-  // Group by model
-  const groups = {};
-  data.forEach(d => {
-    const model = shortModel(d.config.model_name);
-    if (!groups[model]) groups[model] = [];
-    groups[model].push(d);
-  });
-
-  const modelNames = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
-
-  // Clean up old charts
-  perModelCharts.forEach(c => c.destroy());
-  perModelCharts.length = 0;
-  container.innerHTML = "";
-
-  modelNames.forEach((model, mi) => {
-    const exps = groups[model];
-    if (exps.length < 2) return;
-
-    const color = MODEL_CHART_COLORS[mi % MODEL_CHART_COLORS.length];
-
-    const wrap = document.createElement("div");
-    wrap.className = "kz-per-model-chart-wrap";
-    wrap.innerHTML = `
-      <h3 class="kz-heading-4 kz-mb-8" style="color:${color}">${model}</h3>
-      <p class="kz-extra-small kz-text--muted kz-mb-8">${exps.length} experiments &middot; BPB=${exps[0].metrics.val_bpb.toFixed(2)}</p>
-      <div class="kz-chart-canvas-wrap kz-chart-canvas-wrap--per-model">
-        <canvas aria-label="Scatter plot of throughput vs SCI for ${model}" role="img"></canvas>
-      </div>`;
-    container.appendChild(wrap);
-
-    const canvas = wrap.querySelector("canvas");
-    const ctx = canvas.getContext("2d");
-
-    // Batch size → point radius mapping
-    const batchSizes = [...new Set(exps.map(e => e.config.batch_size))].sort((a, b) => a - b);
-
-    const points = exps.map(e => ({
-      x: e.metrics.tokens_per_sec,
-      y: e.metrics.sci_per_token * 1e6,
-      r: Math.max(4, 3 + batchSizes.indexOf(e.config.batch_size) * 2),
-      _raw: e
-    }));
-
-    // Pareto frontier line for this model
-    const paretoPoints = exps
-      .filter(e => e.pareto_rank === 0)
-      .sort((a, b) => a.metrics.tokens_per_sec - b.metrics.tokens_per_sec);
-
-    const datasets = [{
-      label: model,
-      data: points,
-      backgroundColor: color + "88",
-      borderColor: color,
-      borderWidth: 1.5,
-      hoverBorderWidth: 3
-    }];
-
-    if (paretoPoints.length > 1) {
-      datasets.push({
-        label: "Pareto",
-        type: "line",
-        data: paretoPoints.map(p => ({ x: p.metrics.tokens_per_sec, y: p.metrics.sci_per_token * 1e6 })),
-        borderColor: cc.paretoLine,
-        borderWidth: 2,
-        borderDash: [4, 2],
-        pointRadius: 0,
-        fill: false,
-        tension: 0.3,
-        order: -1
-      });
-    }
-
-    const chart = new Chart(ctx, {
-      type: "bubble",
-      data: { datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label(ctx) {
-                const raw = ctx.raw._raw;
-                if (!raw) return ctx.dataset.label;
-                return [
-                  `Batch: ${raw.config.batch_size} | Seq: ${raw.config.sequence_length}`,
-                  `${raw.metrics.tokens_per_sec.toFixed(0)} tok/s | ${(raw.metrics.sci_per_token * 1e6).toFixed(1)} \u00B5gCO2/tok`
-                ];
-              }
-            },
-            backgroundColor: cc.tooltipBg,
-            titleColor: cc.tooltipText,
-            bodyColor: cc.tooltipText,
-            padding: 10,
-            cornerRadius: 6
-          }
-        },
-        scales: {
-          x: { type: "logarithmic", title: { display: true, text: "tok/s (log)", font: { size: 11 } }, grid: { color: "rgba(0,0,0,0.05)" } },
-          y: { type: "logarithmic", title: { display: true, text: "SCI (\u00B5gCO2/tok, log)", font: { size: 11 } }, grid: { color: "rgba(0,0,0,0.05)" } }
-        },
-        onClick: (evt, elements) => {
-          if (elements.length > 0) {
-            const el = elements[0];
-            const raw = chart.data.datasets[el.datasetIndex].data[el.index]._raw;
-            if (raw) openDetailModal(raw);
-          }
-        }
-      }
-    });
-    perModelCharts.push(chart);
-  });
-
-  // Batch size legend
-  const allBatches = [...new Set(data.map(d => d.config.batch_size))].sort((a, b) => a - b);
-  const legendDiv = document.createElement("div");
-  legendDiv.className = "kz-legend kz-mt-8";
-  legendDiv.innerHTML = allBatches.map(bs => {
-    const size = 6 + allBatches.indexOf(bs) * 3;
-    return `<span class="kz-legend__item"><span class="kz-legend__dot" style="background:#64748b;width:${size}px;height:${size}px"></span>batch=${bs}</span>`;
-  }).join("");
-  container.appendChild(legendDiv);
-}
-
-// ─── Hardware Telemetry Page (matches sensor analysis in analyze_all.py) ──────
-let sensorData = null;
-let gpuProfileChart = null;
-let thermalChart = null;
-let memoryChart = null;
-
-async function loadSensorData() {
-  if (sensorData) return sensorData;
-  try {
-    const resp = await fetch("sensor_data.json");
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    sensorData = await resp.json();
-    return sensorData;
-  } catch (e) {
-    console.warn("sensor_data.json not found, hardware page will be empty:", e);
-    return null;
-  }
-}
-
-async function initHardwarePage() {
-  const sd = await loadSensorData();
-  if (!sd) {
-    document.getElementById("hw-summary-badges").innerHTML =
-      '<span class="kz-badge kz-badge--dark">No sensor data available. Run extract_sensor_data.py to generate.</span>';
-    return;
-  }
-
-  const cc = getChartColors();
-
-  // Summary badges
-  document.getElementById("hw-summary-badges").innerHTML = [
-    `<span class="kz-badge kz-badge--green kz-badge--lg">${sd.total_samples.toLocaleString()} sensor samples</span>`,
-    `<span class="kz-badge kz-badge--dark kz-badge--lg">${sd.total_runs} runs</span>`,
-    `<span class="kz-badge kz-badge--dark kz-badge--lg">1 Hz sampling</span>`
-  ].join("");
-
-  renderGPUProfile(sd, cc);
-  renderThrottleEvents(sd);
-  renderBoardThermal(sd, cc);
-  renderMemoryProfile(sd, cc);
-  renderPSI(sd);
-  renderSystemStats(sd);
-  renderPCIe(sd);
-  renderPerRunHighlights(sd);
-}
-
-function renderGPUProfile(sd, cc) {
-  const gp = sd.gpu_profile;
-  const keys = Object.keys(gp);
-  if (!keys.length) return;
-
-  // Table
-  document.getElementById("gpu-profile-tbody").innerHTML = keys.map(key => {
-    const m = gp[key];
-    return `<tr class="kz-table-row">
-      <td class="kz-table-cell"><strong>${m.label}</strong></td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${m.min}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono kz-score--ok">${m.mean}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${m.median}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono" style="color:var(--color-red-500)">${m.p95}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono" style="font-weight:700;color:var(--color-red-600)">${m.max}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-text--muted">${m.count.toLocaleString()}</td>
-    </tr>`;
-  }).join("");
-
-  // Chart: show key metrics (temp, power, util) as grouped bar
-  const chartMetrics = ["gpu_temp_c", "gpu_power_w", "gpu_util_pct"].filter(k => gp[k]);
-  const labels = chartMetrics.map(k => gp[k].label);
-
-  if (gpuProfileChart) gpuProfileChart.destroy();
-  gpuProfileChart = new Chart(document.getElementById("gpu-profile-chart").getContext("2d"), {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [
-        { label: "Min", data: chartMetrics.map(k => gp[k].min), backgroundColor: "#d1fae5", borderRadius: 3 },
-        { label: "Mean", data: chartMetrics.map(k => gp[k].mean), backgroundColor: cc.barPrimary, borderRadius: 3 },
-        { label: "P95", data: chartMetrics.map(k => gp[k].p95), backgroundColor: "#fbbf24", borderRadius: 3 },
-        { label: "Max", data: chartMetrics.map(k => gp[k].max), backgroundColor: "#ef4444", borderRadius: 3 }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: "top" } },
-      scales: {
-        y: { beginAtZero: true, grid: { color: "rgba(0,0,0,0.05)" } },
-        x: { grid: { display: false } }
-      }
-    }
-  });
-}
-
-function renderThrottleEvents(sd) {
-  const te = sd.throttle_events;
-  const keys = Object.keys(te);
-  if (!keys.length) {
-    document.getElementById("throttle-events-list").innerHTML = '<div class="kz-small kz-text--muted">No throttle data available.</div>';
-    return;
-  }
-
-  document.getElementById("throttle-events-list").innerHTML = keys.map(key => {
-    const e = te[key];
-    const isTriggered = e.triggered > 0;
-    const icon = isTriggered ? "&#x26A0;" : "&#x2705;";
-    const style = isTriggered ? "color:var(--color-red-600);font-weight:600" : "";
-    return `<div class="kz-throttle-event" style="${style}">
-      <span>${icon}</span>
-      <span>${e.label}: ${isTriggered ? `${e.triggered}/${e.total} (${e.pct}%)` : "clean"}</span>
-    </div>`;
-  }).join("");
-}
-
-function renderBoardThermal(sd, cc) {
-  const bt = sd.board_thermal;
-  const keys = Object.keys(bt);
-  if (!keys.length) return;
-
-  // Table
-  document.getElementById("thermal-tbody").innerHTML = keys.map(key => {
-    const s = bt[key];
-    const maxStyle = s.max > 80 ? "font-weight:700;color:var(--color-red-600)" : "";
-    return `<tr class="kz-table-row">
-      <td class="kz-table-cell"><strong>${s.label}</strong></td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono kz-score--ok">${s.mean}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono" style="${maxStyle}">${s.max}</td>
-    </tr>`;
-  }).join("");
-
-  // Chart
-  const labels = keys.map(k => bt[k].label);
-  if (thermalChart) thermalChart.destroy();
-  thermalChart = new Chart(document.getElementById("thermal-chart").getContext("2d"), {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [
-        { label: "Mean (\u00B0C)", data: keys.map(k => bt[k].mean), backgroundColor: "#fbbf24", borderRadius: 3 },
-        { label: "Max (\u00B0C)", data: keys.map(k => bt[k].max), backgroundColor: keys.map(k => bt[k].max > 80 ? "#ef4444" : "#f97316"), borderRadius: 3 }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: "top" } },
-      scales: {
-        y: { beginAtZero: true, title: { display: true, text: "\u00B0C" }, grid: { color: "rgba(0,0,0,0.05)" } },
-        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
-      }
-    }
-  });
-}
-
-function renderMemoryProfile(sd, cc) {
-  const mp = sd.memory_profile;
-  const keys = Object.keys(mp);
-  if (!keys.length) return;
-
-  // Table
-  document.getElementById("memory-tbody").innerHTML = keys.map(key => {
-    const m = mp[key];
-    return `<tr class="kz-table-row">
-      <td class="kz-table-cell"><strong>${m.label} (${m.unit})</strong></td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono kz-score--ok">${m.mean}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono" style="color:var(--color-red-500)">${m.max}</td>
-    </tr>`;
-  }).join("");
-
-  // Chart (only GB metrics)
-  const gbKeys = keys.filter(k => mp[k].unit === "GB");
-  if (memoryChart) memoryChart.destroy();
-  memoryChart = new Chart(document.getElementById("memory-chart").getContext("2d"), {
-    type: "bar",
-    data: {
-      labels: gbKeys.map(k => mp[k].label),
-      datasets: [
-        { label: "Mean (GB)", data: gbKeys.map(k => mp[k].mean), backgroundColor: cc.barPrimary, borderRadius: 3 },
-        { label: "Max (GB)", data: gbKeys.map(k => mp[k].max), backgroundColor: cc.barSecondary, borderRadius: 3 }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: "top" } },
-      scales: {
-        y: { beginAtZero: true, title: { display: true, text: "GB" }, grid: { color: "rgba(0,0,0,0.05)" } },
-        x: { grid: { display: false } }
-      }
-    }
-  });
-}
-
-function renderPSI(sd) {
-  const psi = sd.psi;
-  const keys = Object.keys(psi);
-  if (!keys.length) {
-    document.getElementById("psi-list").innerHTML = '<div class="kz-small kz-text--muted">No PSI data available.</div>';
-    return;
-  }
-
-  document.getElementById("psi-list").innerHTML = keys.map(key => {
-    const p = psi[key];
-    const icon = p.max > 5 ? "&#x1F534;" : p.max > 1 ? "&#x1F7E1;" : "&#x1F7E2;";
-    return `<div class="kz-throttle-event">
-      <span>${icon}</span>
-      <span>${p.label}: mean=${p.mean.toFixed(2)}% p95=${p.p95.toFixed(2)}% max=${p.max.toFixed(2)}%</span>
-    </div>`;
-  }).join("");
-}
-
-function renderSystemStats(sd) {
-  const sys = sd.system;
-  const keys = Object.keys(sys);
-  if (!keys.length) return;
-
-  document.getElementById("system-tbody").innerHTML = keys.map(key => {
-    const s = sys[key];
-    return `<tr class="kz-table-row">
-      <td class="kz-table-cell"><strong>${s.label}</strong></td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${s.mean}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${s.max}</td>
-    </tr>`;
-  }).join("");
-}
-
-function renderPCIe(sd) {
-  const pcie = sd.pcie;
-  if (!pcie) {
-    document.getElementById("pcie-details").innerHTML = '<div class="kz-small kz-text--muted">No PCIe link data available.</div>';
-    return;
-  }
-
-  document.getElementById("pcie-details").innerHTML = `
-    <div class="kz-small">
-      <div class="kz-mb-8"><strong>Gen:</strong> min=${pcie.gen.min} mean=${pcie.gen.mean.toFixed(1)} max=${pcie.gen.max}</div>
-      <div><strong>Width:</strong> min=${pcie.width.min} mean=${pcie.width.mean.toFixed(1)} max=${pcie.width.max}</div>
-    </div>
-    <p class="kz-extra-small kz-text--muted kz-mt-16">PCIe link may change under load. C2C (chip-to-chip) on DGX Spark uses a direct interconnect.</p>`;
-}
-
-function renderPerRunHighlights(sd) {
-  const runs = sd.per_run;
-  if (!runs.length) return;
-
-  document.getElementById("per-run-tbody").innerHTML = runs.map(r => {
-    const duration = r.duration_sec != null ? `${Math.floor(r.duration_sec / 60)}m${(r.duration_sec % 60).toString().padStart(2, "0")}s` : "-";
-    return `<tr class="kz-table-row">
-      <td class="kz-table-cell"><strong>${r.name.replace("run_", "")}</strong></td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${r.samples}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${duration}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${r.gpu_power_avg_w != null ? r.gpu_power_avg_w.toFixed(1) : "-"}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono ${r.gpu_temp_max_c > 75 ? "kz-score--bad" : ""}">${r.gpu_temp_max_c != null ? r.gpu_temp_max_c : "-"}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${r.gpu_util_max_pct != null ? r.gpu_util_max_pct + "%" : "-"}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${r.load_avg_mean != null ? r.load_avg_mean.toFixed(1) : "-"}</td>
-      <td class="kz-table-cell kz-table-cell--right kz-table-cell--mono">${r.mem_used_max_gb != null ? r.mem_used_max_gb.toFixed(1) : "-"}</td>
-    </tr>`;
-  }).join("");
-}
-
-// ─── Initialize ───────────────────────────────────────────────────────────────
+// ─── Initialize ─────────────────────────────────────────────────────────────────
 function init() {
-  renderStatsBar();
-  renderParetoChart();
-  renderPerModelScatter();
-  renderPreviewTable();
-  populateFilters();
-  renderLeaderboard();
-
-  // Set initial tab ARIA state
-  const tabs = document.querySelectorAll("#leaderboard-tabs .kz-tab");
-  tabs.forEach((t, i) => {
-    t.setAttribute("tabindex", i === 0 ? "0" : "-1");
-  });
-
-  pageInitialized.dashboard = true;
-  pageInitialized.leaderboards = true;
+  renderStatsBar(); renderParetoChart(); renderPreviewTable();
+  populateFilters(); renderLeaderboard();
+  document.querySelectorAll("#leaderboard-tabs .mta-tab").forEach((t, i) => t.setAttribute("tabindex", i === 0 ? "0" : "-1"));
+  pageInitialized.dashboard = true; pageInitialized.leaderboards = true;
 }
 
-// Wait for Chart.js if deferred
-if (typeof Chart !== "undefined") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  window.addEventListener("load", init);
-}
+if (typeof Chart !== "undefined") document.addEventListener("DOMContentLoaded", init);
+else window.addEventListener("load", init);
